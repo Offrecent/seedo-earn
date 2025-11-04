@@ -33,7 +33,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
-import TermsPage from '@/app/terms/page';
+import { motion } from 'framer-motion';
 
 const StepIndicator = ({ currentStep }: { currentStep: number }) => {
   const steps = ['Fill Details', 'Pay', 'Verify'];
@@ -275,7 +275,6 @@ export default function RegisterPage() {
                                     <DialogDescription>Please review the terms and conditions before proceeding.</DialogDescription>
                                 </DialogHeader>
                                 <div className="flex-grow overflow-y-auto pr-4">
-                                   {/* We will render the content of terms page here */}
                                    <div className="prose prose-sm dark:prose-invert max-w-none">
                                         <TermsContent />
                                    </div>
@@ -355,21 +354,20 @@ export default function RegisterPage() {
   );
 }
 
-// A component to render the content of the terms page inside the modal
 function TermsContent() {
     return (
         <>
         <section>
             <h2 className="text-lg font-semibold">1. Introduction</h2>
-            <p>Welcome to Seedo...</p>
+            <p>Welcome to Seedo. These Terms and Conditions govern your use of our platform and services. By registering on Seedo, you agree to comply with and be bound by these terms.</p>
         </section>
         <section>
             <h2 className="text-lg font-semibold mt-4">2. Subscription Policy</h2>
-            <p>Access to the Seedo earning platform requires an active monthly subscription of <strong>₦3,000</strong>...</p>
+            <p>Access to the Seedo earning platform requires an active monthly subscription of <strong>₦3,000</strong>. This fee grants you access to daily tasks, raffles, and all other earning features for the subscription period. Subscriptions are recurring and must be renewed monthly to maintain access.</p>
         </section>
         <section>
             <h2 className="text-lg font-semibold mt-4">3. Welcome Bonus</h2>
-            <p>Upon successful registration and payment, a welcome bonus of <strong>₦4,500</strong> will be credited to your account...</p>
+            <p>Upon successful registration and payment, a welcome bonus of <strong>₦4,500</strong> will be credited to your account. This bonus is initially locked. To unlock the bonus and make it available for withdrawal, you must successfully refer a minimum of <strong>three (3)</strong> valid users who complete their registration and subscription payment.</p>
         </section>
         <section>
             <h2 className="text-lg font-semibold mt-4">4. Raffle Rules</h2>
@@ -409,6 +407,3 @@ function TermsContent() {
         </>
     );
 }
-
-// We need to import motion from framer-motion
-import { motion } from 'framer-motion';
