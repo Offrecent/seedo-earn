@@ -299,7 +299,7 @@ export default function RegisterPage() {
              {step === 2 && (
                 <div className="text-center space-y-4">
                     <h3 className="text-xl font-semibold">Complete Your Registration</h3>
-                    <p className="text-muted-foreground">A one-time subscription fee of ₦3,000 is required to activate your account.</p>
+                    <p className="text-muted-foreground">A monthly subscription fee of ₦3,000 is required to activate your account.</p>
                     <div className="p-6 bg-muted rounded-lg">
                         <p className="text-sm">You are about to pay</p>
                         <p className="text-4xl font-bold">₦3,000</p>

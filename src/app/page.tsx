@@ -16,7 +16,7 @@ export default function Home() {
   const features = [
     {
       title: 'Paid Registration',
-      description: 'Unlock your earning potential with a one-time subscription.',
+      description: 'Unlock your earning potential with a monthly subscription.',
       icon: <DollarSign className="w-8 h-8 text-primary" />,
     },
     {
