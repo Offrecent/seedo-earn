@@ -61,7 +61,7 @@ export default function DashboardPage() {
         </div>
       ),
       footerText: 'View wallet',
-      link: '/wallet',
+      link: '/withdraw',
     },
     {
       title: 'Referral Stats',
