@@ -43,20 +43,26 @@ export default function Home() {
           <Link href="/" className="mr-6 flex items-center space-x-2">
             <span className="font-bold text-lg">Seedo</span>
           </Link>
-          <nav className="flex items-center gap-6 text-sm">
+          <nav className="flex items-center gap-6 text-sm ml-auto">
             <Link
               href="/#features"
-              onClick={scrollToFeatures}
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToFeatures();
+              }}
               className="transition-colors hover:text-foreground/80 text-foreground/60"
             >
               Features
             </Link>
             <Link
-              href="/#stats"
+              href="/login"
               className="transition-colors hover:text-foreground/80 text-foreground/60"
             >
-              Stats
+              Login
             </Link>
+             <Button asChild size="sm">
+                <Link href="/register">Join Seedo</Link>
+              </Button>
           </nav>
         </div>
       </header>
@@ -125,7 +131,7 @@ export default function Home() {
         <section id="stats" className="py-16 md:py-24">
           <div className="container text-center">
             <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Quick Stats</h2>
-            <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2">
+            <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-2">
               <div className="p-8 border rounded-lg bg-background/50">
                 <p className="text-4xl font-bold text-primary">1,234+</p>
                 <p className="mt-2 text-muted-foreground">Active Users</p>
@@ -144,7 +150,7 @@ export default function Home() {
       <footer className="border-t">
         <div className="container py-8 flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground">
           <p>&copy; {new Date().getFullYear()} Seedo. All rights reserved.</p>
-          <div className="flex gap-4 mt-4 md:mt-0">
+          <div className="flex flex-wrap justify-center gap-4 mt-4 md:mt-0">
             <a href="#" className="hover:text-primary">WhatsApp Support</a>
             <a href="mailto:seedo.earn@gmail.com" className="hover:text-primary">seedo.earn@gmail.com</a>
             <Link href="/terms" className="hover:text-primary">Terms</Link>
