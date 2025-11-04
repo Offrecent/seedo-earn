@@ -1,0 +1,14 @@
+diff --git a/node_modules/next/dist/build/webpack/config/blocks/base.js b/node_modules/next/dist/build/webpack/config/blocks/base.js
+index d652a97561f22c15939a3f2b18987b7a54a6136a..6e0166299b64082531a8947c617b4899da924b17 100644
+--- a/node_modules/next/dist/build/webpack/config/blocks/base.js
++++ b/node_modules/next/dist/build/webpack/config/blocks/base.js
+@@ -79,7 +79,8 @@
+                 "react-dom/client",
+                 "react-server-dom-webpack/client.edge",
+                 "react-server-dom-webpack/server.edge",
+-                "react-server-dom-webpack/server.node"
++                "react-server-dom-webpack/server.node",
++                "async_hooks"
+             ];
+             // `sass` is an optional dependency, so we don't want to throw an error if it's not installed.
+             try {
