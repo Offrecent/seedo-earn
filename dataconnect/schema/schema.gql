@@ -1,0 +1,77 @@
+type User @table {
+  authUid: String!
+  displayName: String!
+  email: String!
+  createdAt: Timestamp!
+  subscriptionEndDate: Timestamp!
+  photoUrl: String
+  totalEarnings: Float
+  referralCode: String
+  referredBy: User
+  whatsappGroupLink: String
+}
+
+type SubscriptionType @table {
+  userId: UUID!
+  amount: Float!
+  paymentDate: Timestamp!
+  renewalDate: Timestamp!
+  user: User!
+  transactionId: String
+  status: String
+}
+
+type Task @table {
+  title: String!
+  description: String!
+  points: Int!
+  createdAt: Timestamp!
+  type: String!
+  externalLink: String
+  adminNotes: String
+}
+
+type UserTask @table {
+  userId: UUID!
+  taskId: UUID!
+  completedAt: Timestamp!
+  status: String!
+  user: User!
+  task: Task!
+  submissionDetails: String
+  adminFeedback: String
+}
+
+type Raffle @table {
+  prizeAmount: Float!
+  drawTime: Timestamp!
+  ticketPrice: Float!
+  maxTicketsPerUser: Int!
+  minNumber: Int!
+  maxNumber: Int!
+  status: String!
+  winner: User
+  winningNumber: Int
+  createdAt: Timestamp
+}
+
+type RaffleTicket @table {
+  userId: UUID!
+  raffleId: UUID!
+  selectedNumber: Int!
+  purchasedAt: Timestamp!
+  user: User!
+  raffle: Raffle!
+  transactionId: String
+}
+
+type WithdrawalRequest @table {
+  userId: UUID!
+  amount: Float!
+  requestDate: Timestamp!
+  status: String!
+  user: User!
+  bankDetails: String
+  adminNotes: String
+  approvalDate: Timestamp
+}

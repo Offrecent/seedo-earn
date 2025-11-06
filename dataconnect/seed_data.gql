@@ -1,0 +1,28 @@
+mutation CreateSeedData @transaction @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public as it is only used for initial data seeding.") {
+  # Example: Inserting data into a hypothetical 'Product' table
+  product_insertMany(data: [
+    {
+      id: "123e4567-e89b-12d3-a456-426614174000",
+      name: "Sample Product 1",
+      description: "This is a sample product for demonstration.",
+      price: 29.99
+    },
+    {
+      id: "89ab6754-ca32-4907-b5cd-98abcdef12345",
+      name: "Sample Product 2",
+      description: "Another sample product for showcasing purposes.",
+      price: 49.99
+    }
+  ])
+  # Example: Inserting data into a hypothetical 'Category' table
+  category_insertMany(data: [
+    {
+      id: "987fgh65-de21-7890-bc34-0123456789ab",
+      name: "Electronics"
+    },
+    {
+      id: "456abc32-fe98-3456-cd01-901234567890",
+      name: "Books"
+    }
+  ])
+}

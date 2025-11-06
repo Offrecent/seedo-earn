@@ -1,0 +1,37 @@
+mutation CreateRaffle @auth(level: USER) {
+  raffle_insert(data: {
+    drawTime: "2024-03-15T12:00:00Z",
+    maxNumber: 100,
+    maxTicketsPerUser: 5,
+    minNumber: 1,
+    prizeAmount: 100.0,
+    status: "active",
+    ticketPrice: 5.0
+  })
+}
+
+query ListActiveRaffles @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  raffles(where: {status: {eq: "active"}}) {
+    id
+    drawTime
+    prizeAmount
+  }
+}
+
+mutation PurchaseRaffleTicket($raffleId: UUID!, $selectedNumber: Int!) @auth(level: USER) {
+  raffleTicket_insert(data: {
+    raffleId: $raffleId,
+    userId_expr: "auth.uid",
+    selectedNumber: $selectedNumber,
+    purchasedAt_expr: "request.time"
+  })
+}
+
+mutation UpdateTask($id: UUID!, $adminNotes: String) @auth(level: USER, insecureReason: "This operation is safe to expose to all logged in users.") {
+  task_update(
+    id: $id,
+    data: {
+      adminNotes: $adminNotes
+    }
+  )
+}
