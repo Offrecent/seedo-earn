@@ -39,6 +39,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useTheme } from 'next-themes';
 import Header from '@/components/header';
+import React from 'react';
 
 export default function DashboardPage() {
   const { theme, setTheme } = useTheme();
@@ -181,14 +182,6 @@ export default function DashboardPage() {
         </div>
       </main>
 
-        <Button
-          variant="default"
-          size="icon"
-          className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg"
-        >
-          <HelpCircle className="h-8 w-8" />
-          <span className="sr-only">Support</span>
-        </Button>
     </div>
   );
 }
