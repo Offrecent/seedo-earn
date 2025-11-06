@@ -19,13 +19,21 @@ import {
 } from '@/components/ui/table';
 import { Copy, Loader2, Twitter } from 'lucide-react';
 import { useUser } from '@/firebase/auth/use-user';
+import { useCollection } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { useCollectionQuery } from '@/firebase/firestore/use-collection';
 
 export default function ReferralsPage() {
   const { user, userData, loading } = useUser();
+  const firestore = useFirestore();
+  
+  const userReferralsQuery = userData && firestore ? query(collection(firestore, 'users'), where('referredBy', '==', userData.referralCode)) : null;
+  const { data: referrals, loading: referralsLoading } = useCollectionQuery(userReferralsQuery);
+  
+  const { data: leaderboard, loading: leaderboardLoading } = useCollection('users'); // Simplified leaderboard, should be an aggregation in a real app
 
-  const referralLink = userData?.referralCode ? `${window.location.origin}/register?ref=${userData.referralCode}` : '';
-  const referrals: any[] = [];
-  const leaderboard: any[] = [];
+  const referralLink = (typeof window !== 'undefined' && userData?.referralCode) ? `${window.location.origin}/register?ref=${userData.referralCode}` : '';
   
   if (loading || !user) {
     return (
@@ -34,6 +42,8 @@ export default function ReferralsPage() {
       </div>
     );
   }
+  
+  const sortedLeaderboard = leaderboard?.sort((a,b) => (b.referrals?.count || 0) - (a.referrals?.count || 0)).slice(0, 10);
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -69,13 +79,17 @@ export default function ReferralsPage() {
                     <CardTitle>Share on Social Media</CardTitle>
                 </CardHeader>
                 <CardContent className="flex gap-2">
-                    <Button variant="outline" className="w-full">
+                    <Button variant="outline" className="w-full" asChild>
+                      <a href={`https://wa.me/?text=Join%20Seedo%20and%20start%20earning!%20Use%20my%20link:%20${encodeURIComponent(referralLink)}`} target="_blank" rel="noopener noreferrer">
                         <svg className="w-5 h-5 mr-2" role="img" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-.757-.375-1.056-.524-.297-.149-.522-.223-.672-.149-.149.074-.223.374-.298.599-.074.224-.149.448-.223.599-.075.15-.15.15-.298.075-.149-.075-.672-.224-1.27-.448-.599-.224-1.123-.523-1.572-.898-.449-.374-.823-.823-1.122-1.27-.298-.448-.597-1.047-.822-1.572-.224-.523-.448-1.122-.448-1.122s-.075-.15.075-.298c.15-.15.298-.224.448-.298.15-.075.298-.15.448-.224l.075-.074c.15-.15.224-.298.224-.523s-.074-.448-.149-.598c-.074-.15-.149-.298-.298-.448-.149-.15-.298-.224-.523-.374-.224-.149-.448-.224-.598-.224-.15 0-.298 0-.448.074-.149.075-.374.15-.523.298-.15.15-.298.299-.374.374s-.224.298-.298.448c-.075.15-.15.298-.15.374s-.075.298-.075.448v.075c0 .074.075.223.15.373.074.15.149.298.223.448.075.15.224.448.374.672.15.224.298.448.448.598.15.15.374.374.598.598.224.224.523.523.822.822.298.299.748.673 1.27.972.523.299 1.122.598 1.797.823.673.224 1.197.374 1.646.448.449.075.973.075 1.347-.075.374-.149.823-.298 1.122-.598.298-.298.522-.748.597-1.122.075-.375.075-.75 0-1.123-.074-.374-.074-.598-.149-.748-.075-.149-.149-.224-.298-.298s-.224-.15-.298-.15z"/></svg>
                         WhatsApp
+                      </a>
                     </Button>
-                    <Button variant="outline" className="w-full">
+                    <Button variant="outline" className="w-full" asChild>
+                      <a href={`https://twitter.com/intent/tweet?text=Join%20Seedo%20and%20start%20earning!&url=${encodeURIComponent(referralLink)}`} target="_blank" rel="noopener noreferrer">
                         <Twitter className="w-5 h-5 mr-2" />
                         Twitter
+                      </a>
                     </Button>
                 </CardContent>
              </Card>
@@ -103,12 +117,16 @@ export default function ReferralsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {referrals.length > 0 ? referrals.map((ref) => (
-                      <TableRow key={ref.username}>
+                    {referralsLoading ? (
+                        <TableRow>
+                            <TableCell colSpan={2} className="text-center"><Loader2 className="animate-spin mx-auto"/></TableCell>
+                        </TableRow>
+                    ) : referrals && referrals.length > 0 ? referrals.map((ref) => (
+                      <TableRow key={ref.id}>
                         <TableCell className="font-medium">{ref.username}</TableCell>
                         <TableCell className="text-right">
-                           <span className={`text-xs font-semibold py-1 px-2 rounded-full ${ref.status === 'Active' ? 'bg-green-500/20 text-green-500' : 'bg-yellow-500/20 text-yellow-500'}`}>
-                                {ref.status}
+                           <span className={`text-xs font-semibold py-1 px-2 rounded-full ${ref.subscription?.status === 'active' ? 'bg-green-500/20 text-green-500' : 'bg-yellow-500/20 text-yellow-500'}`}>
+                                {ref.subscription?.status}
                             </span>
                         </TableCell>
                       </TableRow>
@@ -136,11 +154,15 @@ export default function ReferralsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {leaderboard.length > 0 ? leaderboard.map((user) => (
-                      <TableRow key={user.rank}>
-                        <TableCell className="font-bold">{user.rank}</TableCell>
+                    {leaderboardLoading ? (
+                         <TableRow>
+                            <TableCell colSpan={3} className="text-center"><Loader2 className="animate-spin mx-auto"/></TableCell>
+                        </TableRow>
+                    ) : sortedLeaderboard && sortedLeaderboard.length > 0 ? sortedLeaderboard.map((user, index) => (
+                      <TableRow key={user.id}>
+                        <TableCell className="font-bold">{index + 1}</TableCell>
                         <TableCell>{user.username}</TableCell>
-                        <TableCell className="text-right font-medium">{user.count}</TableCell>
+                        <TableCell className="text-right font-medium">{user.referrals?.count || 0}</TableCell>
                       </TableRow>
                     )) : (
                          <TableRow>

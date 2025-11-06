@@ -2,20 +2,16 @@
 
 import {
   Activity,
-  BarChart,
-  Bell,
   CheckCircle2,
   DollarSign,
-  Eye,
+  Loader2,
   Settings,
-  ShieldAlert,
   Ticket,
   Users,
   Wallet,
   XCircle,
   Bot,
 } from 'lucide-react';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -35,27 +31,83 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import Header from '@/components/header';
+import { useUser } from '@/firebase/auth/use-user';
+import { useCollection } from '@/firebase/firestore/use-collection';
+import { useRouter } from 'next/navigation';
+import { doc, getFirestore, writeBatch } from 'firebase/firestore';
+import { useFirebaseApp } from '@/firebase';
+import { Label } from '@/components/ui/label';
+import { useDoc } from '@/firebase';
 
 export default function AdminPage() {
-  // Placeholder data - to be replaced with real data from Firestore
+  const { user, userData, loading: userLoading } = useUser();
+  const router = useRouter();
+  const app = useFirebaseApp();
+
+  const { data: usersData, loading: usersLoading } = useCollection('users');
+  const { data: withdrawalsData, loading: withdrawalsLoading } = useCollection('withdrawals');
+  const { data: chatMessagesData, loading: chatMessagesLoading } = useCollection('chatMessages');
+  const { data: aiLogsData, loading: aiLogsLoading } = useCollection('aiLogs');
+  const { data: globalSettingsData, loading: settingsLoading } = useDoc('settings/global');
+  
+  const totalUsers = usersData?.length || 0;
+  const activeSubs = usersData?.filter(u => u.subscription?.status === 'active').length || 0;
+  // Placeholder for total income until payments collection is implemented
+  const totalIncome = '₦0';
+  const pendingWithdrawalsCount = withdrawalsData?.filter(w => w.status === 'pending').length || 0;
+  
+  const handleUpdateUserStatus = async (userId: string, newStatus: 'active' | 'suspended') => {
+      if (!app) return;
+      const db = getFirestore(app);
+      const userRef = doc(db, 'users', userId);
+      try {
+        await writeBatch(db).update(userRef, { 'subscription.status': newStatus }).commit();
+        alert(`User status updated to ${newStatus}`);
+      } catch (error) {
+          console.error("Error updating user status: ", error);
+          alert("Failed to update user status.");
+      }
+  };
+  
+  const handleWithdrawalAction = async (withdrawalId: string, action: 'approved' | 'rejected') => {
+      if (!app) return;
+      const db = getFirestore(app);
+      const withdrawalRef = doc(db, 'withdrawals', withdrawalId);
+      try {
+        await writeBatch(db).update(withdrawalRef, { status: action, processedAt: new Date() }).commit();
+        alert(`Withdrawal has been ${action}.`);
+      } catch (error) {
+          console.error(`Error ${action} withdrawal: `, error);
+          alert(`Failed to ${action} withdrawal.`);
+      }
+  };
+
+  if (userLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-16 h-16 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    router.push('/login');
+    return null;
+  }
+
+  if (userData?.role !== 'admin') {
+    router.push('/dashboard');
+    return <p>Access Denied. Redirecting...</p>;
+  }
+
   const overviewCards = [
-    { title: 'Total Users', value: '0', icon: <Users className="h-4 w-4 text-muted-foreground" /> },
-    { title: 'Active Subs', value: '0', icon: <CheckCircle2 className="h-4 w-4 text-muted-foreground" /> },
-    { title: 'Total Income', value: '₦0', icon: <DollarSign className="h-4 w-4 text-muted-foreground" /> },
-    { title: 'Pending Withdrawals', value: '0', icon: <Wallet className="h-4 w-4 text-muted-foreground" /> },
+    { title: 'Total Users', value: totalUsers, icon: <Users className="h-4 w-4 text-muted-foreground" /> },
+    { title: 'Active Subs', value: activeSubs, icon: <CheckCircle2 className="h-4 w-4 text-muted-foreground" /> },
+    { title: 'Total Income', value: totalIncome, icon: <DollarSign className="h-4 w-4 text-muted-foreground" /> },
+    { title: 'Pending Withdrawals', value: pendingWithdrawalsCount, icon: <Wallet className="h-4 w-4 text-muted-foreground" /> },
   ];
 
-  const users: any[] = [
-    // { id: '1', name: 'John Doe', email: 'john@example.com', status: 'Active' },
-  ];
-  
-  const pendingWithdrawals: any[] = [
-      // { id: 'wd1', userName: 'John Doe', amount: '₦10,000', date: '2024-10-28' },
-  ]
-  
-  const flaggedMessages: any[] = [
-      // { id: 'msg1', userName: 'test_user', message: 'This is a flagged message.', reason: 'Potential spam' },
-  ]
+  const flaggedMessages = chatMessagesData?.filter(m => m.flagged) || [];
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -129,18 +181,20 @@ export default function AdminPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {users.length > 0 ? users.map((user) => (
+                      {usersLoading ? (
+                        <TableRow><TableCell colSpan={4} className="text-center"><Loader2 className="animate-spin mx-auto"/></TableCell></TableRow>
+                      ) : usersData && usersData.length > 0 ? usersData.map((user) => (
                         <TableRow key={user.id}>
-                          <TableCell className="font-medium">{user.name}</TableCell>
+                          <TableCell className="font-medium">{user.fullName}</TableCell>
                           <TableCell>{user.email}</TableCell>
                           <TableCell>
-                            <span className={`px-2 py-1 text-xs rounded-full ${user.status === 'Active' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>
-                              {user.status}
+                            <span className={`px-2 py-1 text-xs rounded-full ${user.subscription?.status === 'active' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>
+                              {user.subscription?.status}
                             </span>
                           </TableCell>
                           <TableCell className="text-right">
-                             <Button variant="outline" size="sm">
-                                {user.status === 'Active' ? 'Suspend' : 'Reactivate'}
+                             <Button variant="outline" size="sm" onClick={() => handleUpdateUserStatus(user.id, user.subscription?.status === 'active' ? 'suspended' : 'active')}>
+                                {user.subscription?.status === 'active' ? 'Suspend' : 'Reactivate'}
                              </Button>
                           </TableCell>
                         </TableRow>
@@ -186,23 +240,25 @@ export default function AdminPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>User</TableHead>
+                                    <TableHead>User ID</TableHead>
                                     <TableHead>Amount</TableHead>
                                     <TableHead>Date</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {pendingWithdrawals.length > 0 ? pendingWithdrawals.map(req => (
+                                {withdrawalsLoading ? (
+                                    <TableRow><TableCell colSpan={4} className="text-center"><Loader2 className="animate-spin mx-auto"/></TableCell></TableRow>
+                                ) : withdrawalsData?.filter(w => w.status === 'pending').length > 0 ? withdrawalsData.filter(w => w.status === 'pending').map(req => (
                                     <TableRow key={req.id}>
-                                        <TableCell>{req.userName}</TableCell>
-                                        <TableCell>{req.amount}</TableCell>
-                                        <TableCell>{req.date}</TableCell>
+                                        <TableCell className="font-mono">{req.userId}</TableCell>
+                                        <TableCell>₦{req.amount.toLocaleString()}</TableCell>
+                                        <TableCell>{req.requestedAt.toDate().toLocaleDateString()}</TableCell>
                                         <TableCell className="text-right space-x-2">
-                                            <Button variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-100 hover:text-green-700">
+                                            <Button variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-100 hover:text-green-700" onClick={() => handleWithdrawalAction(req.id, 'approved')}>
                                                 <CheckCircle2 className="mr-2 h-4 w-4"/> Approve
                                             </Button>
-                                            <Button variant="destructive" size="sm">
+                                            <Button variant="destructive" size="sm" onClick={() => handleWithdrawalAction(req.id, 'rejected')}>
                                                 <XCircle className="mr-2 h-4 w-4"/> Reject
                                             </Button>
                                         </TableCell>
@@ -223,11 +279,11 @@ export default function AdminPage() {
                          <CardDescription>Review messages flagged by the moderation AI.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {flaggedMessages.length > 0 ? flaggedMessages.map(msg => (
+                        {chatMessagesLoading ? <Loader2 className="animate-spin mx-auto"/> : flaggedMessages.length > 0 ? flaggedMessages.map(msg => (
                             <div key={msg.id} className="border p-4 rounded-lg mb-4">
-                                <p><strong>User:</strong> {msg.userName}</p>
-                                <p><strong>Message:</strong> "{msg.message}"</p>
-                                <p className="text-destructive"><strong>Reason:</strong> {msg.reason}</p>
+                                <p><strong>User:</strong> {msg.username}</p>
+                                <p><strong>Message:</strong> "{msg.content}"</p>
+                                <p className="text-destructive"><strong>Reason:</strong> Potential spam</p>
                                 <div className="mt-2 space-x-2">
                                     <Button size="sm" variant="destructive">Delete Message</Button>
                                      <Button size="sm" variant="outline">Warn User</Button>
@@ -247,15 +303,25 @@ export default function AdminPage() {
                         <CardDescription>Manage platform-wide settings.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                        {settingsLoading ? <Loader2 className="animate-spin mx-auto"/> : globalSettingsData ? <>
                         <div className="space-y-2">
                             <Label>WhatsApp Group Link</Label>
-                            <Input defaultValue="https://chat.whatsapp.com/..." />
+                            <Input defaultValue={globalSettingsData.whatsappGroupLink} />
                         </div>
                         <div className="space-y-2">
                             <Label>Default Raffle Prize (₦)</Label>
-                            <Input type="number" defaultValue="50000" />
+                            <Input type="number" defaultValue={globalSettingsData.defaultRafflePrize} />
+                        </div>
+                         <div className="space-y-2">
+                            <Label>Ticket Price (₦)</Label>
+                            <Input type="number" defaultValue={globalSettingsData.ticketPrice} />
+                        </div>
+                         <div className="space-y-2">
+                            <Label>Max Tickets Per User</Label>
+                            <Input type="number" defaultValue={globalSettingsData.maxTicketsPerUser} />
                         </div>
                         <Button>Save Settings</Button>
+                        </> : <p>Could not load settings.</p>}
                     </CardContent>
                 </Card>
             </TabsContent>
@@ -267,7 +333,28 @@ export default function AdminPage() {
                         <CardDescription>Review logs from AI operations and tools.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-muted-foreground">AI logs will be displayed here...</p>
+                        {aiLogsLoading ? <Loader2 className="animate-spin mx-auto"/> : aiLogsData && aiLogsData.length > 0 ? (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Timestamp</TableHead>
+                                        <TableHead>User ID</TableHead>
+                                        <TableHead>Flow</TableHead>
+                                        <TableHead>Error</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {aiLogsData.map(log => (
+                                        <TableRow key={log.id}>
+                                            <TableCell>{log.createdAt.toDate().toLocaleString()}</TableCell>
+                                            <TableCell className="font-mono">{log.userId}</TableCell>
+                                            <TableCell>{log.flow}</TableCell>
+                                            <TableCell className="text-destructive">{log.error}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        ) : <p className="text-muted-foreground">No AI logs found.</p>}
                     </CardContent>
                 </Card>
             </TabsContent>

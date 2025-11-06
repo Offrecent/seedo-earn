@@ -1,15 +1,45 @@
 'use client';
+import { useEffect, useState } from 'react';
 import Header from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Ticket } from 'lucide-react';
 import { useUser } from '@/firebase/auth/use-user';
 import { Loader2 } from 'lucide-react';
+import { useCollection } from '@/firebase';
 
 export default function RafflePage() {
-  const { user, loading } } = useUser();
+  const { user, loading: userLoading } = useUser();
+  const { data: raffles, loading: rafflesLoading } = useCollection('raffles');
+  const { data: pastWinnersData, loading: pastWinnersLoading } = useCollection('users'); // This is not ideal, should be a dedicated 'winners' collection
 
-  if (loading || !user) {
+  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
+
+  const currentRaffle = raffles?.find(r => r.status === 'open');
+
+  useEffect(() => {
+    if (!currentRaffle) return;
+
+    const interval = setInterval(() => {
+      const now = new Date();
+      const drawTime = currentRaffle.drawTime.toDate();
+      const difference = drawTime.getTime() - now.getTime();
+
+      if (difference > 0) {
+        const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+        const minutes = Math.floor((difference / 1000 / 60) % 60);
+        const seconds = Math.floor((difference / 1000) % 60);
+        setTimeLeft({ hours, minutes, seconds });
+      } else {
+        setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
+        clearInterval(interval);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [currentRaffle]);
+
+  if (userLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-16 h-16 animate-spin" />
@@ -17,6 +47,13 @@ export default function RafflePage() {
     );
   }
   
+  const loading = userLoading || rafflesLoading || pastWinnersLoading;
+  
+  const pastWinners = raffles?.filter(r => r.status === 'completed' && r.winnerId).slice(0, 3).map(r => {
+      const winner = pastWinnersData?.find(u => u.id === r.winnerId);
+      return { ...r, winnerName: winner?.fullName || 'Unknown Winner' };
+  });
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <Header />
@@ -34,50 +71,44 @@ export default function RafflePage() {
                 <CardTitle>Next Draw In</CardTitle>
             </CardHeader>
             <CardContent>
-                <p className="text-5xl font-bold tracking-tighter">12:45:30</p>
-                <p className="text-accent font-bold text-lg mt-2">Prize: ₦100,000</p>
+                {loading ? <Loader2 className="w-12 h-12 animate-spin mx-auto"/> : currentRaffle ? (
+                    <>
+                        <p className="text-5xl font-bold tracking-tighter">
+                            {String(timeLeft.hours).padStart(2, '0')}:
+                            {String(timeLeft.minutes).padStart(2, '0')}:
+                            {String(timeLeft.seconds).padStart(2, '0')}
+                        </p>
+                        <p className="text-accent font-bold text-lg mt-2">Prize: ₦{currentRaffle.prizeAmount.toLocaleString()}</p>
+                    </>
+                ) : <p>No active raffle right now.</p>}
             </CardContent>
           </Card>
 
            <div className="text-center mb-8">
-                <Button size="lg">
+                <Button size="lg" disabled={loading || !currentRaffle}>
                     <Ticket className="mr-2 h-5 w-5" />
                     Buy Tickets
                 </Button>
-                <p className="text-sm text-muted-foreground mt-2">Tickets cost ₦1,000 each. You can buy up to 5 tickets today.</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                    Tickets cost ₦{currentRaffle?.ticketPrice?.toLocaleString() || '...'} each. You can buy up to {currentRaffle?.maxTicketsPerUser || '...'} tickets today.
+                </p>
            </div>
 
 
            <div>
             <h2 className="text-2xl font-bold mb-4 text-center">Past Winners</h2>
              <div className="grid gap-4 md:grid-cols-3">
-                 <Card>
-                    <CardHeader>
-                        <CardTitle className="text-lg">John Doe</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p>Won <span className="font-bold text-accent">₦50,000</span></p>
-                        <p className="text-xs text-muted-foreground">on {new Date().toLocaleDateString()}</p>
-                    </CardContent>
-                 </Card>
-                  <Card>
-                    <CardHeader>
-                        <CardTitle className="text-lg">Jane Smith</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                         <p>Won <span className="font-bold text-accent">₦50,000</span></p>
-                        <p className="text-xs text-muted-foreground">on {new Date(Date.now() - 86400000).toLocaleDateString()}</p>
-                    </CardContent>
-                 </Card>
-                  <Card>
-                    <CardHeader>
-                        <CardTitle className="text-lg">Alex Johnson</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                         <p>Won <span className="font-bold text-accent">₦50,000</span></p>
-                        <p className="text-xs text-muted-foreground">on {new Date(Date.now() - 2 * 86400000).toLocaleDateString()}</p>
-                    </CardContent>
-                 </Card>
+                 {loading ? <Loader2 className="animate-spin mx-auto"/> : pastWinners && pastWinners.length > 0 ? pastWinners.map(winner => (
+                     <Card key={winner.id}>
+                        <CardHeader>
+                            <CardTitle className="text-lg">{winner.winnerName}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p>Won <span className="font-bold text-accent">₦{winner.prizeAmount.toLocaleString()}</span></p>
+                            <p className="text-xs text-muted-foreground">on {winner.drawTime.toDate().toLocaleDateString()}</p>
+                        </CardContent>
+                     </Card>
+                 )) : <p className="text-muted-foreground text-center md:col-span-3">No past winners to show.</p>}
              </div>
            </div>
 

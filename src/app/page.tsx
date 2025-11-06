@@ -1,12 +1,15 @@
-
 'use client';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, Gift, Users, Zap } from 'lucide-react';
+import { DollarSign, Gift, Users, Zap, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useCollection } from '@/firebase';
 
 export default function Home() {
+  const { data: users, loading: usersLoading } = useCollection('users');
+  const { data: raffles, loading: rafflesLoading } = useCollection('raffles');
+
   const scrollToFeatures = () => {
     const featuresSection = document.getElementById('features');
     if (featuresSection) {
@@ -36,6 +39,9 @@ export default function Home() {
       icon: <Users className="w-8 h-8 text-primary" />,
     },
   ];
+
+  const activeUserCount = users?.filter(u => u.subscription.status === 'active').length || 0;
+  const latestPrize = raffles?.sort((a,b) => b.drawTime.seconds - a.drawTime.seconds)[0]?.prizeAmount || 0;
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-100 via-transparent to-green-100 dark:from-blue-900/50 dark:via-transparent dark:to-green-900/50">
@@ -134,11 +140,11 @@ export default function Home() {
             <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Quick Stats</h2>
             <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-2">
               <div className="p-8 border rounded-lg bg-background/50">
-                <p className="text-4xl font-bold text-primary">0+</p>
+                {usersLoading ? <Loader2 className="h-10 w-10 animate-spin mx-auto" /> : <p className="text-4xl font-bold text-primary">{activeUserCount.toLocaleString()}+</p>}
                 <p className="mt-2 text-muted-foreground">Active Users</p>
               </div>
               <div className="p-8 border rounded-lg bg-background/50">
-                <p className="text-4xl font-bold text-accent">₦0+</p>
+                {rafflesLoading ? <Loader2 className="h-10 w-10 animate-spin mx-auto" /> : <p className="text-4xl font-bold text-accent">₦{latestPrize.toLocaleString()}+</p>}
                 <p className="mt-2 text-muted-foreground">in Daily Prizes</p>
               </div>
             </div>

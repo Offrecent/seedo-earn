@@ -24,33 +24,56 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
 import { useUser } from '@/firebase/auth/use-user';
+import { useFirestore } from '@/firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { useCollectionQuery } from '@/firebase/firestore/use-collection';
+import { query, where } from 'firebase/firestore';
 
 export default function WithdrawPage() {
   const [amount, setAmount] = useState('');
-  const [status, setStatus<"idle" | "loading" | "success">('idle');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [error, setError] = useState('');
   
   const { user, userData, loading } = useUser();
+  const firestore = useFirestore();
+
+  const userWithdrawalsQuery = user && firestore ? query(collection(firestore, 'withdrawals'), where('userId', '==', user.uid)) : null;
+  const { data: history, loading: historyLoading } = useCollectionQuery(userWithdrawalsQuery);
+
   const availableBalance = userData?.wallet?.balance || 0;
   const withdrawalFee = 200;
   const minWithdrawal = 5000;
 
-  const handleRequest = () => {
+  const handleRequest = async () => {
     const numericAmount = parseFloat(amount);
     if (isNaN(numericAmount) || numericAmount < minWithdrawal || numericAmount > availableBalance) {
-        alert(`Invalid amount. Please enter a value between ₦${minWithdrawal} and ₦${availableBalance}.`);
+        setError(`Invalid amount. Please enter a value between ₦${minWithdrawal} and ₦${availableBalance}.`);
+        setStatus('error');
         return;
     }
+    if (!firestore || !user) return;
 
     setStatus('loading');
-    // Simulate API call
-    setTimeout(() => {
+    setError('');
+
+    try {
+        await addDoc(collection(firestore, "withdrawals"), {
+            userId: user.uid,
+            amount: numericAmount,
+            fee: withdrawalFee,
+            status: 'pending',
+            requestedAt: serverTimestamp(),
+        });
         setStatus('success');
-    }, 2000);
+        setAmount('');
+    } catch(err) {
+        console.error(err);
+        setError("An error occurred while submitting your request.");
+        setStatus('error');
+    }
   };
 
   const finalAmount = amount ? Math.max(0, parseFloat(amount) - withdrawalFee) : 0;
-
-  const history: any[] = [];
 
   if (loading || !user) {
     return (
@@ -76,7 +99,7 @@ export default function WithdrawPage() {
             <Alert variant="default" className="mb-8 bg-green-500/10 border-green-500/50">
                 <AlertTitle>Request Submitted!</AlertTitle>
                 <AlertDescription>
-                    Your withdrawal request for <strong>₦{amount}</strong> is now pending admin approval. It may take up to 48 hours to process.
+                    Your withdrawal request for <strong>₦{parseFloat(amount).toLocaleString()}</strong> is now pending admin approval. It may take up to 48 hours to process.
                 </AlertDescription>
             </Alert>
         ) : (
@@ -88,6 +111,7 @@ export default function WithdrawPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+               {status === 'error' && <Alert variant="destructive"><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
               <div className="space-y-2">
                 <Label htmlFor="amount">Amount to Withdraw (₦)</Label>
                 <Input
@@ -111,7 +135,7 @@ export default function WithdrawPage() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button onClick={handleRequest} disabled={status === 'loading' || !amount || parseFloat(amount) < minWithdrawal}>
+              <Button onClick={handleRequest} disabled={status === 'loading' || !amount || parseFloat(amount) < minWithdrawal || parseFloat(amount) > availableBalance}>
                  {status === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Request Withdrawal
               </Button>
@@ -135,18 +159,22 @@ export default function WithdrawPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {history.length > 0 ? history.map((item, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{item.date}</TableCell>
+                  {historyLoading ? (
+                    <TableRow>
+                        <TableCell colSpan={4} className="text-center"><Loader2 className="animate-spin mx-auto"/></TableCell>
+                    </TableRow>
+                  ) : history && history.length > 0 ? history.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell>{item.requestedAt.toDate().toLocaleDateString()}</TableCell>
                       <TableCell>₦{item.amount.toLocaleString()}</TableCell>
                       <TableCell>₦{item.fee.toLocaleString()}</TableCell>
                       <TableCell className="text-right">
                          <span className={`text-xs font-semibold py-1 px-2 rounded-full ${
-                             item.status === 'Completed' ? 'bg-green-500/20 text-green-500' 
-                             : item.status === 'Rejected' ? 'bg-destructive/20 text-destructive' 
+                             item.status === 'approved' ? 'bg-green-500/20 text-green-500' 
+                             : item.status === 'rejected' ? 'bg-destructive/20 text-destructive' 
                              : 'bg-yellow-500/20 text-yellow-500'
                          }`}>
-                            {item.status}
+                            {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
                         </span>
                       </TableCell>
                     </TableRow>
