@@ -20,6 +20,7 @@ import {
   Ticket,
   Users,
   Wallet,
+  Gamepad2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -100,7 +101,7 @@ export default function DashboardPage() {
   const navButtons = [
     { href: '/tasks', icon: <ClipboardList />, label: 'Tasks' },
     { href: '/raffle', icon: <Ticket />, label: 'Raffle' },
-    { href: '/mini-games', icon: <Grid />, label: 'Games' },
+    { href: '/mini-games', icon: <Gamepad2 />, label: 'Games' },
     { href: '/chatroom', icon: <MessageCircle />, label: 'Chat' },
     { href: '/settings', icon: <Settings />, label: 'Settings' },
   ];
@@ -170,7 +171,7 @@ export default function DashboardPage() {
              {navButtons.map((item) => (
                 <Link href={item.href} key={item.href}>
                     <div className="p-4 rounded-lg bg-card border hover:bg-muted transition-colors flex flex-col items-center justify-center aspect-square">
-                        {item.icon}
+                        {item.icon && React.cloneElement(item.icon, { className: 'w-8 h-8' })}
                         <span className="text-sm mt-2 font-medium">{item.label}</span>
                     </div>
                 </Link>
