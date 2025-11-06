@@ -16,8 +16,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
-import { useAuth } from '@/firebase';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -27,7 +25,6 @@ export default function LoginPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
-  const auth = useAuth();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,15 +35,18 @@ export default function LoginPage() {
       setError('Please enter both email and password.');
       return;
     }
-    if (!auth) return;
-
-    startTransition(async () => {
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-        router.push('/dashboard');
-      } catch (err: any) {
-        setError(err.message || 'Invalid email or password. Please try again.');
-      }
+    
+    startTransition(() => {
+      // Simulate API call
+      setTimeout(() => {
+        if (email === 'admin@example.com' && password === 'password') {
+          router.push('/admin');
+        } else if (password === 'password') {
+          router.push('/dashboard');
+        } else {
+          setError('Invalid email or password. Please try again.');
+        }
+      }, 1000);
     });
   };
 
@@ -57,15 +57,12 @@ export default function LoginPage() {
       setError("Please enter your email address to reset your password.");
       return;
     }
-    if (!auth) return;
 
-    startTransition(async () => {
-      try {
-        await sendPasswordResetEmail(auth, email);
+    startTransition(() => {
+      // Simulate API call
+      setTimeout(() => {
         setMessage(`A password reset link has been sent to ${email}.`);
-      } catch(err: any) {
-        setError(err.message || "Could not send password reset email.");
-      }
+      }, 1000);
     });
   };
 

@@ -18,24 +18,27 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Copy, Loader2, Twitter } from 'lucide-react';
-import { useUser } from '@/firebase/auth/use-user';
-import { useCollection } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
-import { useCollectionQuery } from '@/firebase/firestore/use-collection';
 
 export default function ReferralsPage() {
-  const { user, userData, loading } = useUser();
-  const firestore = useFirestore();
-  
-  const userReferralsQuery = userData && firestore ? query(collection(firestore, 'users'), where('referredBy', '==', userData.referralCode)) : null;
-  const { data: referrals, loading: referralsLoading } = useCollectionQuery(userReferralsQuery);
-  
-  const { data: leaderboard, loading: leaderboardLoading } = useCollection('users'); // Simplified leaderboard, should be an aggregation in a real app
+    // Placeholder data
+  const loading = false;
+  const referralsLoading = false;
+  const leaderboardLoading = false;
+  const userData = { referralCode: 'john123' };
+  const referrals = [
+      { id: '1', username: 'jane.doe', subscription: { status: 'active' } },
+      { id: '2', username: 'peter.jones', subscription: { status: 'active' } },
+      { id: '3', username: 'susan.smith', subscription: { status: 'pending' } },
+  ];
+  const leaderboard = [
+      { id: '1', username: 'TopReferrer1', referrals: { count: 50 } },
+      { id: '2', username: 'SuperNetworker', referrals: { count: 45 } },
+      { id: '3', username: 'john123', referrals: { count: 3 } },
+  ];
 
   const referralLink = (typeof window !== 'undefined' && userData?.referralCode) ? `${window.location.origin}/register?ref=${userData.referralCode}` : '';
   
-  if (loading || !user) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-16 h-16 animate-spin" />

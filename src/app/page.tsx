@@ -4,12 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, Gift, Users, Zap, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useCollection } from '@/firebase';
 
 export default function Home() {
-  const { data: users, loading: usersLoading } = useCollection('users');
-  const { data: raffles, loading: rafflesLoading } = useCollection('raffles');
-
   const scrollToFeatures = () => {
     const featuresSection = document.getElementById('features');
     if (featuresSection) {
@@ -40,8 +36,11 @@ export default function Home() {
     },
   ];
 
-  const activeUserCount = users?.filter(u => u.subscription.status === 'active').length || 0;
-  const latestPrize = raffles?.sort((a,b) => b.drawTime.seconds - a.drawTime.seconds)[0]?.prizeAmount || 0;
+  // Placeholder data
+  const usersLoading = false;
+  const rafflesLoading = false;
+  const activeUserCount = 1000;
+  const latestPrize = 50000;
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-100 via-transparent to-green-100 dark:from-blue-900/50 dark:via-transparent dark:to-green-900/50">

@@ -31,55 +31,55 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import Header from '@/components/header';
-import { useUser } from '@/firebase/auth/use-user';
-import { useCollection } from '@/firebase/firestore/use-collection';
 import { useRouter } from 'next/navigation';
-import { doc, getFirestore, writeBatch } from 'firebase/firestore';
-import { useFirebaseApp } from '@/firebase';
 import { Label } from '@/components/ui/label';
-import { useDoc } from '@/firebase';
 
 export default function AdminPage() {
-  const { user, userData, loading: userLoading } = useUser();
   const router = useRouter();
-  const app = useFirebaseApp();
 
-  const { data: usersData, loading: usersLoading } = useCollection('users');
-  const { data: withdrawalsData, loading: withdrawalsLoading } = useCollection('withdrawals');
-  const { data: chatMessagesData, loading: chatMessagesLoading } = useCollection('chatMessages');
-  const { data: aiLogsData, loading: aiLogsLoading } = useCollection('aiLogs');
-  const { data: globalSettingsData, loading: settingsLoading } = useDoc('settings/global');
+  // Placeholder data
+  const userLoading = false;
+  const user = { uid: 'admin-user' }; // Mock user
+  const userData = { role: 'admin' };
   
+  const usersData = [
+    { id: 'user-1', fullName: 'John Doe', email: 'john@example.com', subscription: { status: 'active' } },
+    { id: 'user-2', fullName: 'Jane Smith', email: 'jane@example.com', subscription: { status: 'suspended' } },
+  ];
+  const withdrawalsData = [
+    { id: 'wd-1', userId: 'user-1', amount: 5000, requestedAt: new Date(), status: 'pending' },
+    { id: 'wd-2', userId: 'user-2', amount: 10000, requestedAt: new Date(), status: 'pending' },
+  ];
+  const chatMessagesData = [
+      { id: 'msg-1', username: 'testuser', content: 'This is a flagged message for spam.', flagged: true },
+  ];
+  const aiLogsData = [
+      { id: 'log-1', createdAt: new Date(), userId: 'user-1', flow: 'testFlow', error: 'API timeout' }
+  ];
+  const globalSettingsData = {
+      whatsappGroupLink: 'https://chat.whatsapp.com/12345',
+      defaultRafflePrize: 10000,
+      ticketPrice: 100,
+      maxTicketsPerUser: 10,
+  };
+  
+  const usersLoading = false;
+  const withdrawalsLoading = false;
+  const chatMessagesLoading = false;
+  const aiLogsLoading = false;
+  const settingsLoading = false;
+
   const totalUsers = usersData?.length || 0;
   const activeSubs = usersData?.filter(u => u.subscription?.status === 'active').length || 0;
-  // Placeholder for total income until payments collection is implemented
   const totalIncome = '₦0';
   const pendingWithdrawalsCount = withdrawalsData?.filter(w => w.status === 'pending').length || 0;
   
-  const handleUpdateUserStatus = async (userId: string, newStatus: 'active' | 'suspended') => {
-      if (!app) return;
-      const db = getFirestore(app);
-      const userRef = doc(db, 'users', userId);
-      try {
-        await writeBatch(db).update(userRef, { 'subscription.status': newStatus }).commit();
-        alert(`User status updated to ${newStatus}`);
-      } catch (error) {
-          console.error("Error updating user status: ", error);
-          alert("Failed to update user status.");
-      }
+  const handleUpdateUserStatus = (userId: string, newStatus: 'active' | 'suspended') => {
+      alert(`Simulating update for user ${userId} to ${newStatus}`);
   };
   
-  const handleWithdrawalAction = async (withdrawalId: string, action: 'approved' | 'rejected') => {
-      if (!app) return;
-      const db = getFirestore(app);
-      const withdrawalRef = doc(db, 'withdrawals', withdrawalId);
-      try {
-        await writeBatch(db).update(withdrawalRef, { status: action, processedAt: new Date() }).commit();
-        alert(`Withdrawal has been ${action}.`);
-      } catch (error) {
-          console.error(`Error ${action} withdrawal: `, error);
-          alert(`Failed to ${action} withdrawal.`);
-      }
+  const handleWithdrawalAction = (withdrawalId: string, action: 'approved' | 'rejected') => {
+      alert(`Simulating ${action} for withdrawal ${withdrawalId}`);
   };
 
   if (userLoading) {
@@ -253,7 +253,7 @@ export default function AdminPage() {
                                     <TableRow key={req.id}>
                                         <TableCell className="font-mono">{req.userId}</TableCell>
                                         <TableCell>₦{req.amount.toLocaleString()}</TableCell>
-                                        <TableCell>{req.requestedAt.toDate().toLocaleDateString()}</TableCell>
+                                        <TableCell>{req.requestedAt.toLocaleDateString()}</TableCell>
                                         <TableCell className="text-right space-x-2">
                                             <Button variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-100 hover:text-green-700" onClick={() => handleWithdrawalAction(req.id, 'approved')}>
                                                 <CheckCircle2 className="mr-2 h-4 w-4"/> Approve
@@ -346,7 +346,7 @@ export default function AdminPage() {
                                 <TableBody>
                                     {aiLogsData.map(log => (
                                         <TableRow key={log.id}>
-                                            <TableCell>{log.createdAt.toDate().toLocaleString()}</TableCell>
+                                            <TableCell>{log.createdAt.toLocaleString()}</TableCell>
                                             <TableCell className="font-mono">{log.userId}</TableCell>
                                             <TableCell>{log.flow}</TableCell>
                                             <TableCell className="text-destructive">{log.error}</TableCell>

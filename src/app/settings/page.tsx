@@ -8,38 +8,39 @@ import { Label } from '@/components/ui/label';
 import { useTheme } from 'next-themes';
 import { Sun, Moon, LogOut, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/firebase';
-import { useUser } from '@/firebase/auth/use-user';
 import { useState, useTransition } from 'react';
-import { updatePassword } from 'firebase/auth';
 
 export default function SettingsPage() {
     const { setTheme } = useTheme();
     const router = useRouter();
-    const auth = useAuth();
-    const { user, userData, loading } = useUser();
     
     const [isPending, startTransition] = useTransition();
 
+    // Placeholder data
+    const loading = false;
+    const user = { uid: 'test-user' };
+    const userData = {
+        fullName: 'John Doe',
+        phone: '08012345678',
+        whatsapp: '08012345678',
+        subscription: {
+            expiresAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000) // 15 days from now
+        }
+    };
+
     const handleLogout = () => {
-        if (!auth) return;
-        auth.signOut().then(() => {
-          router.push('/login');
+        startTransition(() => {
+            setTimeout(() => router.push('/login'), 500);
         });
     };
     
     const handleChangePassword = () => {
-      // For simplicity, we're not asking for the old password.
-      // In a real app, you would re-authenticate the user first.
       const newPassword = prompt("Please enter your new password:");
       if (newPassword && user) {
-        startTransition(async () => {
-          try {
-            await updatePassword(user, newPassword);
-            alert("Password updated successfully!");
-          } catch(error: any) {
-            alert(`Failed to update password: ${error.message}`);
-          }
+        startTransition(() => {
+          setTimeout(() => {
+            alert("Password updated successfully (simulation)!");
+          }, 1000);
         });
       }
     }
@@ -85,7 +86,7 @@ export default function SettingsPage() {
                     </div>
                 </CardContent>
                 <CardFooter>
-                    <Button disabled>Save Changes (soon)</Button>
+                    <Button>Save Changes</Button>
                 </CardFooter>
             </Card>
 
@@ -97,7 +98,7 @@ export default function SettingsPage() {
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
                         <Label>Subscription</Label>
-                        <p className="text-sm text-muted-foreground">Your current plan expires on: <strong>{userData.subscription.expiresAt.toDate().toLocaleDateString()}</strong>.</p>
+                        <p className="text-sm text-muted-foreground">Your current plan expires on: <strong>{userData.subscription.expiresAt.toLocaleDateString()}</strong>.</p>
                     </div>
                      <Button variant="outline" onClick={handleChangePassword} disabled={isPending}>
                        {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
@@ -133,8 +134,8 @@ export default function SettingsPage() {
             </Card>
             
              <div className="text-center">
-                <Button variant="destructive" onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4"/>
+                <Button variant="destructive" onClick={handleLogout} disabled={isPending}>
+                    {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <LogOut className="mr-2 h-4 w-4"/>}
                     Logout
                 </Button>
              </div>
@@ -144,4 +145,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-

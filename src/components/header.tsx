@@ -11,18 +11,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { Moon, Sun, User, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/firebase';
 
 export default function Header() {
   const { setTheme } = useTheme();
   const router = useRouter();
-  const auth = useAuth();
 
   const handleLogout = () => {
-    if (!auth) return;
-    auth.signOut().then(() => {
-      router.push('/login');
-    });
+    // Simulate logout
+    router.push('/login');
   };
 
   return (

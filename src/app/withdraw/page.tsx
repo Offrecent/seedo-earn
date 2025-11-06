@@ -23,22 +23,21 @@ import {
 } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
-import { useUser } from '@/firebase/auth/use-user';
-import { useFirestore } from '@/firebase';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { useCollectionQuery } from '@/firebase/firestore/use-collection';
-import { query, where } from 'firebase/firestore';
 
 export default function WithdrawPage() {
   const [amount, setAmount] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [error, setError] = useState('');
   
-  const { user, userData, loading } = useUser();
-  const firestore = useFirestore();
-
-  const userWithdrawalsQuery = user && firestore ? query(collection(firestore, 'withdrawals'), where('userId', '==', user.uid)) : null;
-  const { data: history, loading: historyLoading } = useCollectionQuery(userWithdrawalsQuery);
+  // Placeholder data
+  const loading = false;
+  const user = { uid: 'test-user' };
+  const userData = { wallet: { balance: 12500 } };
+  const historyLoading = false;
+  const [history, setHistory] = useState([
+    { id: '1', requestedAt: new Date(Date.now() - 86400000 * 5), amount: 5000, fee: 200, status: 'approved' },
+    { id: '2', requestedAt: new Date(Date.now() - 86400000 * 2), amount: 7000, fee: 200, status: 'rejected' },
+  ]);
 
   const availableBalance = userData?.wallet?.balance || 0;
   const withdrawalFee = 200;
@@ -51,26 +50,24 @@ export default function WithdrawPage() {
         setStatus('error');
         return;
     }
-    if (!firestore || !user) return;
-
+    
     setStatus('loading');
     setError('');
 
-    try {
-        await addDoc(collection(firestore, "withdrawals"), {
+    // Simulate API call
+    setTimeout(() => {
+        const newRequest = {
+            id: `${Date.now()}`,
             userId: user.uid,
             amount: numericAmount,
             fee: withdrawalFee,
             status: 'pending',
-            requestedAt: serverTimestamp(),
-        });
+            requestedAt: new Date(),
+        };
+        setHistory(prev => [newRequest, ...prev]);
         setStatus('success');
-        setAmount('');
-    } catch(err) {
-        console.error(err);
-        setError("An error occurred while submitting your request.");
-        setStatus('error');
-    }
+        // Do not clear amount here so user can see what they entered in the success message.
+    }, 1500);
   };
 
   const finalAmount = amount ? Math.max(0, parseFloat(amount) - withdrawalFee) : 0;
@@ -165,7 +162,7 @@ export default function WithdrawPage() {
                     </TableRow>
                   ) : history && history.length > 0 ? history.map((item) => (
                     <TableRow key={item.id}>
-                      <TableCell>{item.requestedAt.toDate().toLocaleDateString()}</TableCell>
+                      <TableCell>{item.requestedAt.toLocaleDateString()}</TableCell>
                       <TableCell>₦{item.amount.toLocaleString()}</TableCell>
                       <TableCell>₦{item.fee.toLocaleString()}</TableCell>
                       <TableCell className="text-right">

@@ -5,41 +5,43 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, Paperclip, Send } from 'lucide-react';
-import { useUser } from '@/firebase/auth/use-user';
-import { useCollection } from '@/firebase/firestore/use-collection';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
 
 export default function ChatroomPage() {
-  const { user, userData, loading: userLoading } = useUser();
-  const { data: messages, loading: messagesLoading } = useCollection('chatMessages');
-  const firestore = useFirestore();
   const [newMessage, setNewMessage] = useState('');
+  
+  // Placeholder data
+  const user = { uid: 'current-user-id', username: 'You' }; 
+  const userData = { username: 'You' };
+  const userLoading = false;
+  
+  const [messages, setMessages] = useState([
+    { id: '1', userId: 'other-user-1', username: 'Alice', content: 'Hey everyone!', createdAt: { toDate: () => new Date(Date.now() - 60000 * 5) } },
+    { id: '2', userId: 'other-user-2', username: 'Bob', content: 'What\'s up?', createdAt: { toDate: () => new Date(Date.now() - 60000 * 4) } },
+    { id: '3', userId: user.uid, username: user.username, content: 'Just checking out the chat.', createdAt: { toDate: () => new Date(Date.now() - 60000 * 3) } },
+  ]);
+  const messagesLoading = false;
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !user || !userData || !firestore) return;
+    if (!newMessage.trim() || !user || !userData) return;
+    
+    const newMessageObj = {
+      id: `${Date.now()}`,
+      userId: user.uid,
+      username: userData.username,
+      content: newMessage,
+      createdAt: { toDate: () => new Date() },
+    };
 
-    try {
-      await addDoc(collection(firestore, 'chatMessages'), {
-        userId: user.uid,
-        username: userData.username,
-        content: newMessage,
-        createdAt: serverTimestamp(),
-        flagged: false, // AI moderation function would update this
-      });
-      setNewMessage('');
-    } catch (error) {
-      console.error("Error sending message: ", error);
-      alert("Could not send message.");
-    }
+    setMessages(prev => [...prev, newMessageObj]);
+    setNewMessage('');
   };
 
   if (userLoading) {
     return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-16 h-16 animate-spin" /></div>;
   }
   
-  const sortedMessages = messages?.sort((a,b) => a.createdAt?.seconds - b.createdAt?.seconds);
+  const sortedMessages = messages?.sort((a,b) => a.createdAt.toDate().getTime() - b.createdAt.toDate().getTime());
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -84,7 +86,7 @@ export default function ChatroomPage() {
                     )}
                     <p className="text-sm">{msg.content}</p>
                     <p className={`text-xs mt-1 ${msg.userId === user?.uid ? 'text-primary-foreground/70' : 'text-muted-foreground/70'} text-right`}>
-                        {msg.createdAt?.toDate().toLocaleTimeString()}
+                        {msg.createdAt.toDate().toLocaleTimeString()}
                     </p>
                   </div>
                    {msg.userId === user?.uid && (

@@ -34,9 +34,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { useAuth, useFirestore } from '@/firebase';
-import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 const StepIndicator = ({ currentStep }: { currentStep: number }) => {
@@ -91,8 +88,6 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const auth = useAuth();
-  const firestore = useFirestore();
   const router = useRouter();
 
 
@@ -103,11 +98,9 @@ export default function RegisterPage() {
     if (name === 'username') {
       setUsernameStatus('checking');
       // debounce this in a real app
-      setTimeout(async () => {
+      setTimeout(() => {
         if (value.length > 3) {
-          if (!firestore) return;
-          const userDoc = await getDoc(doc(firestore, "users", value));
-          setUsernameStatus(userDoc.exists() ? 'taken' : 'available');
+          setUsernameStatus(value === 'takenuser' ? 'taken' : 'available');
         } else {
           setUsernameStatus('idle');
         }
@@ -138,60 +131,13 @@ export default function RegisterPage() {
   };
   
     const handlePayment = () => {
-        startTransition(async () => {
-            if (!auth || !firestore) {
-              setError("Firebase is not initialized. Please try again later.");
-              return;
-            }
-
+        startTransition(() => {
             console.log("Initiating payment simulation...");
-            // In a real app, this would redirect to Flutterwave
             // Simulate payment verification
-            try {
-              console.log("Creating user...");
-              const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-              const user = userCredential.user;
-
-              console.log("User created, creating Firestore document...");
-              
-              const newUserDoc = {
-                  uid: user.uid,
-                  email: formData.email,
-                  username: formData.username,
-                  fullName: formData.fullName,
-                  gender: formData.gender,
-                  phone: formData.phone,
-                  whatsapp: formData.whatsapp,
-                  referralCode: `${formData.username}${Math.floor(100 + Math.random() * 900)}`,
-                  referredBy: formData.referralCode || null,
-                  createdAt: serverTimestamp(),
-                  subscription: {
-                      status: 'active',
-                      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-                  },
-                  wallet: {
-                      balance: 0,
-                      lockedBonus: 4500,
-                      totalEarned: 0,
-                  },
-                  referrals: {
-                      count: 0,
-                  },
-                  role: 'user', // 'user' or 'admin'
-              };
-
-              await setDoc(doc(firestore, "users", user.uid), newUserDoc);
-
-              // In a real app, you'd also increment the referrer's count.
-
-              console.log("Firestore document created.");
-              setStep(3); // Move to verification/success step
-
-            } catch (err: any) {
-               console.error("Registration failed:", err);
-               setError(err.message || "An unexpected error occurred during registration.");
-               setStep(1); // Go back to form
-            }
+            setTimeout(() => {
+                console.log("Simulating user creation...");
+                setStep(3); // Move to verification/success step
+            }, 2000);
         });
     }
 
@@ -389,7 +335,6 @@ export default function RegisterPage() {
                             Go to Dashboard
                         </Button>
                          <Button variant="secondary" className="w-full">
-                            {/* In a real app, this would come from firestore settings */}
                             <a href="#" target="_blank" rel="noopener noreferrer">Join WhatsApp Group</a>
                         </Button>
                     </div>
@@ -449,7 +394,7 @@ function TermsContent() {
         </section>
         <section>
             <h2 className="text-lg font-semibold mt-4">7. Privacy and Data Use</h2>
-            <p>We are committed to protecting your privacy... All user-uploaded data, such as proof for task submissions, is stored securely using <strong>Firebase Storage</strong>...</p>
+            <p>We are committed to protecting your privacy... All user-uploaded data, such as proof for task submissions, is stored securely...</p>
         </section>
         <section>
             <h2 className="text-lg font-semibold mt-4">8. Changes to Terms</h2>

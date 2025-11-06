@@ -21,11 +21,24 @@ import {
 } from '@/components/ui/card';
 import Header from '@/components/header';
 import React from 'react';
-import { useUser } from '@/firebase/auth/use-user';
 import { Loader2 } from 'lucide-react';
 
 export default function DashboardPage() {
-  const { user, userData, loading } = useUser();
+  // Placeholder data
+  const loading = false;
+  const user = { uid: 'test-user' };
+  const userData = {
+      fullName: 'John Doe',
+      wallet: {
+          balance: 12500,
+          lockedBonus: 4500,
+          totalEarned: 25000,
+      },
+      referrals: {
+          count: 5,
+      },
+      referralCode: 'john123',
+  };
 
   if (loading || !user) {
     return (

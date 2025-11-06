@@ -3,26 +3,31 @@ import { useEffect, useState } from 'react';
 import Header from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Ticket } from 'lucide-react';
-import { useUser } from '@/firebase/auth/use-user';
-import { Loader2 } from 'lucide-react';
-import { useCollection } from '@/firebase';
+import { Ticket, Loader2 } from 'lucide-react';
 
 export default function RafflePage() {
-  const { user, loading: userLoading } = useUser();
-  const { data: raffles, loading: rafflesLoading } = useCollection('raffles');
-  const { data: pastWinnersData, loading: pastWinnersLoading } = useCollection('users'); // This is not ideal, should be a dedicated 'winners' collection
+  const [timeLeft, setTimeLeft] = useState({ hours: 12, minutes: 45, seconds: 30 });
 
-  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
-
-  const currentRaffle = raffles?.find(r => r.status === 'open');
+  // Placeholder data
+  const loading = false;
+  const currentRaffle = {
+      drawTime: new Date(Date.now() + 12 * 60 * 60 * 1000 + 45 * 60 * 1000),
+      prizeAmount: 50000,
+      ticketPrice: 100,
+      maxTicketsPerUser: 10,
+  };
+  const pastWinners = [
+      { id: '1', winnerName: 'Winner One', prizeAmount: 25000, drawTime: new Date(Date.now() - 86400000) },
+      { id: '2', winnerName: 'Winner Two', prizeAmount: 25000, drawTime: new Date(Date.now() - 86400000 * 2) },
+      { id: '3', winnerName: 'Winner Three', prizeAmount: 25000, drawTime: new Date(Date.now() - 86400000 * 3) },
+  ];
 
   useEffect(() => {
     if (!currentRaffle) return;
 
     const interval = setInterval(() => {
       const now = new Date();
-      const drawTime = currentRaffle.drawTime.toDate();
+      const drawTime = currentRaffle.drawTime;
       const difference = drawTime.getTime() - now.getTime();
 
       if (difference > 0) {
@@ -38,21 +43,6 @@ export default function RafflePage() {
 
     return () => clearInterval(interval);
   }, [currentRaffle]);
-
-  if (userLoading || !user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-16 h-16 animate-spin" />
-      </div>
-    );
-  }
-  
-  const loading = userLoading || rafflesLoading || pastWinnersLoading;
-  
-  const pastWinners = raffles?.filter(r => r.status === 'completed' && r.winnerId).slice(0, 3).map(r => {
-      const winner = pastWinnersData?.find(u => u.id === r.winnerId);
-      return { ...r, winnerName: winner?.fullName || 'Unknown Winner' };
-  });
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -105,7 +95,7 @@ export default function RafflePage() {
                         </CardHeader>
                         <CardContent>
                             <p>Won <span className="font-bold text-accent">₦{winner.prizeAmount.toLocaleString()}</span></p>
-                            <p className="text-xs text-muted-foreground">on {winner.drawTime.toDate().toLocaleDateString()}</p>
+                            <p className="text-xs text-muted-foreground">on {winner.drawTime.toLocaleDateString()}</p>
                         </CardContent>
                      </Card>
                  )) : <p className="text-muted-foreground text-center md:col-span-3">No past winners to show.</p>}

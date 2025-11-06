@@ -3,41 +3,19 @@ import Header from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useUser } from '@/firebase/auth/use-user';
 import { Loader2 } from 'lucide-react';
-import { useCollection } from '@/firebase/firestore/use-collection';
-import { collection, query, where } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
-import { useCollectionQuery } from '@/firebase/firestore/use-collection';
 
 export default function TasksPage() {
-    const { user, loading: userLoading } = useUser();
-    const firestore = useFirestore();
-
-    const { data: allTasks, loading: allTasksLoading } = useCollection('tasks');
-    const userTaskSubmissionsQuery = user && firestore ? query(collection(firestore, 'taskSubmissions'), where('userId', '==', user.uid)) : null;
-    const { data: submissions, loading: submissionsLoading } = useCollectionQuery(userTaskSubmissionsQuery);
-
-    const getTaskStatus = (taskId: string) => {
-        if (!submissions) return 'open';
-        const submission = submissions.find(s => s.taskId === taskId);
-        return submission ? submission.status : 'open';
-    }
-
-    const getAdminNotes = (taskId: string) => {
-        if (!submissions) return null;
-        const submission = submissions.find(s => s.taskId === taskId);
-        return submission ? submission.adminNotes : null;
-    }
-
-    const tasks = allTasks?.map(task => ({
-        ...task,
-        status: getTaskStatus(task.id),
-        adminNotes: getAdminNotes(task.id),
-    })) || [];
+    // Placeholder data
+    const loading = false;
+    const tasks = [
+        { id: '1', title: 'Follow us on Twitter', description: 'Follow our official Twitter account and get rewarded.', payout: 150, category: 'Social', status: 'open', adminNotes: null },
+        { id: '2', title: 'Solve the Daily Riddle', description: 'I have cities, but no houses. I have mountains, but no trees. I have water, but no fish. What am I?', payout: 200, category: 'Riddle', status: 'open', adminNotes: null },
+        { id: '3', title: 'Mega Task: Create a Video', description: 'Create a short video testimonial about Seedo and upload it to YouTube.', payout: 1000, category: 'Mega', status: 'pending', adminNotes: null },
+        { id: '4', title: 'Like our Facebook Page', description: 'Like and follow our official page on Facebook.', payout: 150, category: 'Social', status: 'approved', adminNotes: null },
+        { id: '5', title: 'Incorrect Submission', description: 'This task was submitted with incorrect proof and was rejected.', payout: 150, category: 'Social', status: 'rejected', adminNotes: 'The screenshot provided was not clear.' },
+    ];
     
-    const loading = userLoading || allTasksLoading || submissionsLoading;
-
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'pending':
@@ -51,7 +29,7 @@ export default function TasksPage() {
         }
     }
     
-    if (userLoading || !user) {
+    if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <Loader2 className="w-16 h-16 animate-spin" />
