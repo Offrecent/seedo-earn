@@ -2,23 +2,55 @@
 'use client';
 import Header from '@/components/header';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useTheme } from 'next-themes';
-import { Sun, Moon, LogOut } from 'lucide-react';
+import { Sun, Moon, LogOut, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/firebase';
+import { useUser } from '@/firebase/auth/use-user';
+import { useState, useTransition } from 'react';
+import { updatePassword } from 'firebase/auth';
 
 export default function SettingsPage() {
     const { setTheme } = useTheme();
     const router = useRouter();
+    const auth = useAuth();
+    const { user, userData, loading } = useUser();
     
-    const handleLogout = () => {
-        // Placeholder for Firebase logout
-        console.log('Logging out...');
-        router.push('/login');
-    };
+    const [isPending, startTransition] = useTransition();
 
+    const handleLogout = () => {
+        if (!auth) return;
+        auth.signOut().then(() => {
+          router.push('/login');
+        });
+    };
+    
+    const handleChangePassword = () => {
+      // For simplicity, we're not asking for the old password.
+      // In a real app, you would re-authenticate the user first.
+      const newPassword = prompt("Please enter your new password:");
+      if (newPassword && user) {
+        startTransition(async () => {
+          try {
+            await updatePassword(user, newPassword);
+            alert("Password updated successfully!");
+          } catch(error: any) {
+            alert(`Failed to update password: ${error.message}`);
+          }
+        });
+      }
+    }
+
+    if (loading || !user || !userData) {
+      return (
+        <div className="flex items-center justify-center min-h-screen">
+          <Loader2 className="w-16 h-16 animate-spin" />
+        </div>
+      );
+    }
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -41,19 +73,19 @@ export default function SettingsPage() {
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="fullName">Full Name</Label>
-                        <Input id="fullName" defaultValue="John Doe" />
+                        <Input id="fullName" defaultValue={userData.fullName} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="phone">Phone Number</Label>
-                        <Input id="phone" defaultValue="+2348012345678" />
+                        <Input id="phone" defaultValue={userData.phone} />
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="whatsapp">WhatsApp Number</Label>
-                        <Input id="whatsapp" defaultValue="+2348012345678" />
+                        <Input id="whatsapp" defaultValue={userData.whatsapp} />
                     </div>
                 </CardContent>
                 <CardFooter>
-                    <Button>Save Changes</Button>
+                    <Button disabled>Save Changes (soon)</Button>
                 </CardFooter>
             </Card>
 
@@ -65,9 +97,12 @@ export default function SettingsPage() {
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
                         <Label>Subscription</Label>
-                        <p className="text-sm text-muted-foreground">Your current plan expires on: <strong>October 31, 2024</strong>.</p>
+                        <p className="text-sm text-muted-foreground">Your current plan expires on: <strong>{userData.subscription.expiresAt.toDate().toLocaleDateString()}</strong>.</p>
                     </div>
-                     <Button variant="outline">Change Password</Button>
+                     <Button variant="outline" onClick={handleChangePassword} disabled={isPending}>
+                       {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                       Change Password
+                     </Button>
                 </CardContent>
             </Card>
 

@@ -34,6 +34,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { useAuth, useFirestore } from '@/firebase';
+import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const StepIndicator = ({ currentStep }: { currentStep: number }) => {
   const steps = ['Fill Details', 'Pay', 'Verify'];
@@ -67,6 +71,8 @@ const StepIndicator = ({ currentStep }: { currentStep: number }) => {
 
 export default function RegisterPage() {
   const [step, setStep] = useState(1);
+  const searchParams = useSearchParams();
+
   const [formData, setFormData] = useState({
     fullName: '',
     username: '',
@@ -74,7 +80,7 @@ export default function RegisterPage() {
     email: '',
     phone: '',
     whatsapp: '',
-    referralCode: '',
+    referralCode: searchParams.get('ref') || '',
     password: '',
     confirmPassword: '',
   });
@@ -85,6 +91,10 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const auth = useAuth();
+  const firestore = useFirestore();
+  const router = useRouter();
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -92,10 +102,12 @@ export default function RegisterPage() {
 
     if (name === 'username') {
       setUsernameStatus('checking');
-      // Placeholder for username check
-      setTimeout(() => {
+      // debounce this in a real app
+      setTimeout(async () => {
         if (value.length > 3) {
-          setUsernameStatus(Math.random() > 0.5 ? 'available' : 'taken');
+          if (!firestore) return;
+          const userDoc = await getDoc(doc(firestore, "users", value));
+          setUsernameStatus(userDoc.exists() ? 'taken' : 'available');
         } else {
           setUsernameStatus('idle');
         }
@@ -121,26 +133,65 @@ export default function RegisterPage() {
     }
     
     startTransition(() => {
-        // Placeholder for createRegistrationPayload
-        console.log("Form Data:", formData);
-        // Simulate API call
-        setTimeout(() => {
-            setStep(2); // Move to payment step
-        }, 1500);
+        setStep(2); // Move to payment step
     });
   };
   
     const handlePayment = () => {
-        startTransition(() => {
-            // Placeholder for Flutterwave checkout
-            console.log("Initiating payment...");
-            setTimeout(() => {
-                // Simulate payment verification
-                 console.log("Verifying payment...");
-                 setTimeout(() => {
-                    setStep(3); // Move to verification/success step
-                 }, 2000);
-            }, 1500);
+        startTransition(async () => {
+            if (!auth || !firestore) {
+              setError("Firebase is not initialized. Please try again later.");
+              return;
+            }
+
+            console.log("Initiating payment simulation...");
+            // In a real app, this would redirect to Flutterwave
+            // Simulate payment verification
+            try {
+              console.log("Creating user...");
+              const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+              const user = userCredential.user;
+
+              console.log("User created, creating Firestore document...");
+              
+              const newUserDoc = {
+                  uid: user.uid,
+                  email: formData.email,
+                  username: formData.username,
+                  fullName: formData.fullName,
+                  gender: formData.gender,
+                  phone: formData.phone,
+                  whatsapp: formData.whatsapp,
+                  referralCode: `${formData.username}${Math.floor(100 + Math.random() * 900)}`,
+                  referredBy: formData.referralCode || null,
+                  createdAt: serverTimestamp(),
+                  subscription: {
+                      status: 'active',
+                      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+                  },
+                  wallet: {
+                      balance: 0,
+                      lockedBonus: 4500,
+                      totalEarned: 0,
+                  },
+                  referrals: {
+                      count: 0,
+                  },
+                  role: 'user', // 'user' or 'admin'
+              };
+
+              await setDoc(doc(firestore, "users", user.uid), newUserDoc);
+
+              // In a real app, you'd also increment the referrer's count.
+
+              console.log("Firestore document created.");
+              setStep(3); // Move to verification/success step
+
+            } catch (err: any) {
+               console.error("Registration failed:", err);
+               setError(err.message || "An unexpected error occurred during registration.");
+               setStep(1); // Go back to form
+            }
         });
     }
 
@@ -289,7 +340,7 @@ export default function RegisterPage() {
                     </Label>
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isPending || !agreedToTerms || usernameStatus === 'taken'}>
+                <Button type="submit" className="w-full" disabled={isPending || !agreedToTerms || usernameStatus === 'taken' || usernameStatus === 'checking'}>
                   {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   Proceed to Payment
                 </Button>
@@ -312,7 +363,7 @@ export default function RegisterPage() {
                     </Alert>
                     <Button onClick={handlePayment} className="w-full" size="lg" disabled={isPending}>
                          {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Pay Now
+                        Pay Now (Simulation)
                     </Button>
                      <Button variant="outline" className="w-full" onClick={() => setStep(1)} disabled={isPending}>
                         Back to Form
@@ -334,11 +385,11 @@ export default function RegisterPage() {
                         </AlertDescription>
                     </Alert>
                     <div className="space-y-2">
-                        <Button className="w-full" size="lg" asChild>
-                            <Link href="/dashboard">Go to Dashboard</Link>
+                        <Button className="w-full" size="lg" onClick={() => router.push('/dashboard')}>
+                            Go to Dashboard
                         </Button>
                          <Button variant="secondary" className="w-full">
-                            {/* Placeholder link */}
+                            {/* In a real app, this would come from firestore settings */}
                             <a href="#" target="_blank" rel="noopener noreferrer">Join WhatsApp Group</a>
                         </Button>
                     </div>

@@ -17,20 +17,23 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Copy, Share2, Twitter } from 'lucide-react';
+import { Copy, Loader2, Twitter } from 'lucide-react';
+import { useUser } from '@/firebase/auth/use-user';
 
 export default function ReferralsPage() {
-  const referralLink = 'https://seedo.app/register?ref=user123';
-  const referrals = [
-    { username: 'newuser1', status: 'Active' },
-    { username: 'another_user', status: 'Active' },
-    { username: 'test_user', status: 'Pending' },
-  ];
-  const leaderboard = [
-    { rank: 1, username: 'TopReferrer', count: 58 },
-    { rank: 2, username: 'AgentSuccess', count: 45 },
-    { rank: 3, username: 'NetworkKing', count: 32 },
-  ];
+  const { user, userData, loading } = useUser();
+
+  const referralLink = userData?.referralCode ? `${window.location.origin}/register?ref=${userData.referralCode}` : '';
+  const referrals: any[] = [];
+  const leaderboard: any[] = [];
+  
+  if (loading || !user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-16 h-16 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -100,7 +103,7 @@ export default function ReferralsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {referrals.map((ref) => (
+                    {referrals.length > 0 ? referrals.map((ref) => (
                       <TableRow key={ref.username}>
                         <TableCell className="font-medium">{ref.username}</TableCell>
                         <TableCell className="text-right">
@@ -109,7 +112,11 @@ export default function ReferralsPage() {
                             </span>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )) : (
+                        <TableRow>
+                            <TableCell colSpan={2} className="text-center">You haven't referred anyone yet.</TableCell>
+                        </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -129,13 +136,17 @@ export default function ReferralsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {leaderboard.map((user) => (
+                    {leaderboard.length > 0 ? leaderboard.map((user) => (
                       <TableRow key={user.rank}>
                         <TableCell className="font-bold">{user.rank}</TableCell>
                         <TableCell>{user.username}</TableCell>
                         <TableCell className="text-right font-medium">{user.count}</TableCell>
                       </TableRow>
-                    ))}
+                    )) : (
+                         <TableRow>
+                            <TableCell colSpan={3} className="text-center">Leaderboard is currently empty.</TableCell>
+                        </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>

@@ -23,11 +23,14 @@ import {
 } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
+import { useUser } from '@/firebase/auth/use-user';
 
 export default function WithdrawPage() {
   const [amount, setAmount] = useState('');
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success'>('idle');
-  const availableBalance = 8000; // Placeholder
+  const [status, setStatus<"idle" | "loading" | "success">('idle');
+  
+  const { user, userData, loading } = useUser();
+  const availableBalance = userData?.wallet?.balance || 0;
   const withdrawalFee = 200;
   const minWithdrawal = 5000;
 
@@ -47,11 +50,15 @@ export default function WithdrawPage() {
 
   const finalAmount = amount ? Math.max(0, parseFloat(amount) - withdrawalFee) : 0;
 
-  const history = [
-    { date: '2023-10-26', amount: 5000, fee: 200, status: 'Completed' },
-    { date: '2023-09-15', amount: 7500, fee: 200, status: 'Completed' },
-    { date: '2023-08-20', amount: 6000, fee: 200, status: 'Rejected' },
-  ];
+  const history: any[] = [];
+
+  if (loading || !user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-16 h-16 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -128,7 +135,7 @@ export default function WithdrawPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {history.map((item, index) => (
+                  {history.length > 0 ? history.map((item, index) => (
                     <TableRow key={index}>
                       <TableCell>{item.date}</TableCell>
                       <TableCell>₦{item.amount.toLocaleString()}</TableCell>
@@ -143,7 +150,11 @@ export default function WithdrawPage() {
                         </span>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )) : (
+                    <TableRow>
+                        <TableCell colSpan={4} className="text-center">No withdrawal history.</TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>

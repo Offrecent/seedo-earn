@@ -1,22 +1,10 @@
 'use client';
 import Link from 'next/link';
 import {
-  Activity,
-  Award,
-  BarChart,
-  ChevronRight,
   ClipboardList,
-  Contact,
-  DollarSign,
-  Gift,
-  Grid,
-  HeartHandshake,
-  HelpCircle,
-  Home,
+  ChevronRight,
   MessageCircle,
-  Moon,
   Settings,
-  Sun,
   Ticket,
   Users,
   Wallet,
@@ -31,18 +19,21 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { useTheme } from 'next-themes';
 import Header from '@/components/header';
 import React from 'react';
+import { useUser } from '@/firebase/auth/use-user';
+import { Loader2 } from 'lucide-react';
 
 export default function DashboardPage() {
-  const { theme, setTheme } = useTheme();
+  const { user, userData, loading } = useUser();
+
+  if (loading || !user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-16 h-16 animate-spin" />
+      </div>
+    );
+  }
 
   const summaryCards = [
     {
@@ -50,14 +41,14 @@ export default function DashboardPage() {
       icon: <Wallet className="w-6 h-6 text-primary" />,
       content: (
         <div>
-          <p className="text-2xl font-bold">₦12,500</p>
+          <p className="text-2xl font-bold">₦{userData?.wallet?.balance.toLocaleString() || '0'}</p>
           <p className="text-xs text-muted-foreground">Total Balance</p>
           <div className="mt-2 text-sm">
             <p>
-              Locked Bonus: <span className="font-semibold">₦4,500</span>
+              Locked Bonus: <span className="font-semibold">₦{userData?.wallet?.lockedBonus.toLocaleString() || '0'}</span>
             </p>
             <p>
-              Total Earned: <span className="font-semibold">₦17,000</span>
+              Total Earned: <span className="font-semibold">₦{userData?.wallet?.totalEarned.toLocaleString() || '0'}</span>
             </p>
           </div>
         </div>
@@ -70,9 +61,9 @@ export default function DashboardPage() {
       icon: <Users className="w-6 h-6 text-primary" />,
       content: (
         <div>
-          <p className="text-2xl font-bold">5</p>
+          <p className="text-2xl font-bold">{userData?.referrals?.count || 0}</p>
           <p className="text-xs text-muted-foreground">Successful Referrals</p>
-          <Button size="sm" variant="outline" className="mt-2">
+          <Button size="sm" variant="outline" className="mt-2" onClick={() => navigator.clipboard.writeText(`${window.location.origin}/register?ref=${userData?.referralCode}`)}>
             Copy Link
           </Button>
         </div>
@@ -93,7 +84,7 @@ export default function DashboardPage() {
     {
       title: 'Next Raffle Draw',
       icon: <Ticket className="w-5 h-5 text-muted-foreground" />,
-      description: 'Countdown: 12h 45m 30s',
+      description: 'Countdown: 12h 45m 30s', // Placeholder
       link: '/raffle',
       linkText: 'Buy tickets',
     },
@@ -113,13 +104,12 @@ export default function DashboardPage() {
       <main className="flex-1 p-4 md:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold">Hello, User 👋</h1>
+            <h1 className="text-3xl font-bold">Hello, {userData?.fullName?.split(' ')[0] || 'User'} 👋</h1>
             <p className="text-muted-foreground">
               Welcome back to your Seedo dashboard.
             </p>
           </div>
 
-          {/* Grid for summary cards */}
           <div className="grid gap-4 md:grid-cols-2 mb-8">
             {summaryCards.map((card) => (
               <Card key={card.title}>
@@ -142,7 +132,6 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          {/* Grid for main cards */}
           <div className="grid gap-4 md:grid-cols-2 mb-8">
             {mainCards.map((card) => (
               <Card key={card.title}>
@@ -154,7 +143,7 @@ export default function DashboardPage() {
                    <CardDescription>{card.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {/* Placeholder content for tasks or raffle info */}
+                  
                 </CardContent>
                  <CardFooter>
                   <Button asChild variant="outline">
@@ -167,7 +156,6 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          {/* Grid for navigation buttons */}
           <div className="grid grid-cols-3 md:grid-cols-5 gap-4 text-center">
              {navButtons.map((item) => (
                 <Link href={item.href} key={item.href}>
@@ -181,7 +169,6 @@ export default function DashboardPage() {
 
         </div>
       </main>
-
     </div>
   );
 }

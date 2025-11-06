@@ -134,15 +134,14 @@ export default function Home() {
             <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Quick Stats</h2>
             <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-2">
               <div className="p-8 border rounded-lg bg-background/50">
-                <p className="text-4xl font-bold text-primary">1,234+</p>
+                <p className="text-4xl font-bold text-primary">0+</p>
                 <p className="mt-2 text-muted-foreground">Active Users</p>
               </div>
               <div className="p-8 border rounded-lg bg-background/50">
-                <p className="text-4xl font-bold text-accent">₦500,000+</p>
+                <p className="text-4xl font-bold text-accent">₦0+</p>
                 <p className="mt-2 text-muted-foreground">in Daily Prizes</p>
               </div>
             </div>
-            <p className="mt-4 text-sm text-muted-foreground">*Stats are for demonstration purposes.</p>
           </div>
         </section>
 

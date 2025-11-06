@@ -15,7 +15,7 @@ import {
   XCircle,
   Bot,
 } from 'lucide-react';
-
+import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -39,24 +39,22 @@ import Header from '@/components/header';
 export default function AdminPage() {
   // Placeholder data - to be replaced with real data from Firestore
   const overviewCards = [
-    { title: 'Total Users', value: '1,234', icon: <Users className="h-4 w-4 text-muted-foreground" /> },
-    { title: 'Active Subs', value: '987', icon: <CheckCircle2 className="h-4 w-4 text-muted-foreground" /> },
-    { title: 'Total Income', value: '₦2,961,000', icon: <DollarSign className="h-4 w-4 text-muted-foreground" /> },
-    { title: 'Pending Withdrawals', value: '12', icon: <Wallet className="h-4 w-4 text-muted-foreground" /> },
+    { title: 'Total Users', value: '0', icon: <Users className="h-4 w-4 text-muted-foreground" /> },
+    { title: 'Active Subs', value: '0', icon: <CheckCircle2 className="h-4 w-4 text-muted-foreground" /> },
+    { title: 'Total Income', value: '₦0', icon: <DollarSign className="h-4 w-4 text-muted-foreground" /> },
+    { title: 'Pending Withdrawals', value: '0', icon: <Wallet className="h-4 w-4 text-muted-foreground" /> },
   ];
 
-  const users = [
-    { id: '1', name: 'John Doe', email: 'john@example.com', status: 'Active' },
-    { id: '2', name: 'Jane Smith', email: 'jane@example.com', status: 'Suspended' },
+  const users: any[] = [
+    // { id: '1', name: 'John Doe', email: 'john@example.com', status: 'Active' },
   ];
   
-  const pendingWithdrawals = [
-      { id: 'wd1', userName: 'John Doe', amount: '₦10,000', date: '2024-10-28' },
-      { id: 'wd2', userName: 'Jane Smith', amount: '₦5,500', date: '2024-10-28' },
+  const pendingWithdrawals: any[] = [
+      // { id: 'wd1', userName: 'John Doe', amount: '₦10,000', date: '2024-10-28' },
   ]
   
-  const flaggedMessages = [
-      { id: 'msg1', userName: 'test_user', message: 'This is a flagged message.', reason: 'Potential spam' },
+  const flaggedMessages: any[] = [
+      // { id: 'msg1', userName: 'test_user', message: 'This is a flagged message.', reason: 'Potential spam' },
   ]
 
   return (
@@ -131,7 +129,7 @@ export default function AdminPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {users.map((user) => (
+                      {users.length > 0 ? users.map((user) => (
                         <TableRow key={user.id}>
                           <TableCell className="font-medium">{user.name}</TableCell>
                           <TableCell>{user.email}</TableCell>
@@ -146,7 +144,9 @@ export default function AdminPage() {
                              </Button>
                           </TableCell>
                         </TableRow>
-                      ))}
+                      )) : (
+                        <TableRow><TableCell colSpan={4} className="text-center">No users found.</TableCell></TableRow>
+                      )}
                     </TableBody>
                   </Table>
                 </CardContent>
@@ -193,7 +193,7 @@ export default function AdminPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {pendingWithdrawals.map(req => (
+                                {pendingWithdrawals.length > 0 ? pendingWithdrawals.map(req => (
                                     <TableRow key={req.id}>
                                         <TableCell>{req.userName}</TableCell>
                                         <TableCell>{req.amount}</TableCell>
@@ -207,7 +207,9 @@ export default function AdminPage() {
                                             </Button>
                                         </TableCell>
                                     </TableRow>
-                                ))}
+                                )) : (
+                                     <TableRow><TableCell colSpan={4} className="text-center">No pending withdrawals.</TableCell></TableRow>
+                                )}
                             </TableBody>
                         </Table>
                     </CardContent>
@@ -221,7 +223,7 @@ export default function AdminPage() {
                          <CardDescription>Review messages flagged by the moderation AI.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {flaggedMessages.map(msg => (
+                        {flaggedMessages.length > 0 ? flaggedMessages.map(msg => (
                             <div key={msg.id} className="border p-4 rounded-lg mb-4">
                                 <p><strong>User:</strong> {msg.userName}</p>
                                 <p><strong>Message:</strong> "{msg.message}"</p>
@@ -231,7 +233,9 @@ export default function AdminPage() {
                                      <Button size="sm" variant="outline">Warn User</Button>
                                 </div>
                             </div>
-                        ))}
+                        )) : (
+                            <p className="text-muted-foreground text-center">No flagged messages.</p>
+                        )}
                     </CardContent>
                 </Card>
             </TabsContent>

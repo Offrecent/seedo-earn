@@ -3,14 +3,15 @@ import Header from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useUser } from '@/firebase/auth/use-user';
+import { Loader2 } from 'lucide-react';
 
 export default function TasksPage() {
+    const { user, loading } = useUser();
 
-    const tasks = [
-        { id: 1, title: 'Follow us on Twitter', payout: '₦100', category: 'Social', status: 'open' },
-        { id: 2, title: 'Solve the Daily Riddle', payout: '₦150', category: 'Riddle', status: 'submitted' },
-        { id: 3, title: 'Mega Task: Create a Review Video', payout: '₦1000', category: 'Mega', status: 'approved' },
-        { id: 4, title: 'Join our Facebook Group', payout: '₦100', category: 'Social', status: 'rejected' },
+    // Placeholder data
+    const tasks: any[] = [
+        // { id: 1, title: 'Follow us on Twitter', payout: '₦100', category: 'Social', status: 'open' },
     ];
 
     const getStatusBadge = (status: string) => {
@@ -24,6 +25,14 @@ export default function TasksPage() {
             default:
                 return null;
         }
+    }
+    
+    if (loading || !user) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <Loader2 className="w-16 h-16 animate-spin" />
+            </div>
+        );
     }
 
   return (
@@ -48,7 +57,7 @@ export default function TasksPage() {
             
             <TabsContent value="all">
                 <div className="space-y-4">
-                    {tasks.map(task => (
+                    {tasks.length > 0 ? tasks.map(task => (
                          <Card key={task.id}>
                             <CardHeader>
                                 <CardTitle className="flex justify-between items-center">
@@ -68,7 +77,11 @@ export default function TasksPage() {
                                 </Button>
                             </CardFooter>
                         </Card>
-                    ))}
+                    )) : (
+                        <div className="text-center text-muted-foreground p-8 border rounded-lg">
+                           <p>No tasks available right now. Check back later!</p>
+                        </div>
+                    )}
                 </div>
             </TabsContent>
             {/* Add more TabsContent for other categories if needed */}

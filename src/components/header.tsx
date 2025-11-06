@@ -6,19 +6,23 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Moon, Sun, User } from 'lucide-react';
+import { Moon, Sun, User, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/firebase';
 
 export default function Header() {
   const { setTheme } = useTheme();
   const router = useRouter();
+  const auth = useAuth();
 
   const handleLogout = () => {
-    // Placeholder for Firebase logout
-    console.log('Logging out...');
-    router.push('/login');
+    if (!auth) return;
+    auth.signOut().then(() => {
+      router.push('/login');
+    });
   };
 
   return (
@@ -36,6 +40,10 @@ export default function Header() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+               <DropdownMenuItem onClick={() => router.push('/settings')}>
+                <User className="h-[1.2rem] w-[1.2rem] mr-2" />
+                Profile
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setTheme('light')}>
                 <Sun className="h-[1.2rem] w-[1.2rem] mr-2" />
                 Light Mode
@@ -44,7 +52,9 @@ export default function Header() {
                 <Moon className="h-[1.2rem] w-[1.2rem] mr-2" />
                 Dark Mode
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="h-[1.2rem] w-[1.2rem] mr-2" />
                 Logout
               </DropdownMenuItem>
             </DropdownMenuContent>

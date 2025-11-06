@@ -3,8 +3,20 @@ import Header from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Ticket } from 'lucide-react';
+import { useUser } from '@/firebase/auth/use-user';
+import { Loader2 } from 'lucide-react';
 
 export default function RafflePage() {
+  const { user, loading } } = useUser();
+
+  if (loading || !user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-16 h-16 animate-spin" />
+      </div>
+    );
+  }
+  
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <Header />

@@ -16,47 +16,57 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { useAuth } from '@/firebase';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const auth = useAuth();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setMessage(null);
 
     if (!email || !password) {
       setError('Please enter both email and password.');
       return;
     }
+    if (!auth) return;
 
-    startTransition(() => {
-      // Placeholder for Firebase Auth login
-      console.log('Attempting to log in with:', { email, password });
-
-      // Simulate API call
-      setTimeout(() => {
-        // Simulate a successful login for demonstration
-        if (email === 'test@example.com' && password === 'password') {
-            router.push('/dashboard');
-        } else {
-            setError('Invalid email or password. Please try again.');
-        }
-      }, 1500);
+    startTransition(async () => {
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        router.push('/dashboard');
+      } catch (err: any) {
+        setError(err.message || 'Invalid email or password. Please try again.');
+      }
     });
   };
 
   const handleForgotPassword = () => {
-    // Placeholder for Firebase password reset flow
+    setError(null);
+    setMessage(null);
     if (!email) {
-        setError("Please enter your email address to reset your password.");
-        return;
+      setError("Please enter your email address to reset your password.");
+      return;
     }
-    alert(`A password reset link has been sent to ${email} (simulation).`);
+    if (!auth) return;
+
+    startTransition(async () => {
+      try {
+        await sendPasswordResetEmail(auth, email);
+        setMessage(`A password reset link has been sent to ${email}.`);
+      } catch(err: any) {
+        setError(err.message || "Could not send password reset email.");
+      }
+    });
   };
 
   return (
@@ -89,6 +99,13 @@ export default function LoginPage() {
                       <AlertDescription>{error}</AlertDescription>
                   </Alert>
               )}
+               {message && (
+                  <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>Info</AlertTitle>
+                      <AlertDescription>{message}</AlertDescription>
+                  </Alert>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -104,7 +121,7 @@ export default function LoginPage() {
               <div className="space-y-2">
                  <div className="flex items-center justify-between">
                     <Label htmlFor="password">Password</Label>
-                    <Button type="button" variant="link" size="sm" className="h-auto p-0" onClick={handleForgotPassword}>
+                    <Button type="button" variant="link" size="sm" className="h-auto p-0" onClick={handleForgotPassword} disabled={isPending}>
                         Forgot password?
                     </Button>
                  </div>

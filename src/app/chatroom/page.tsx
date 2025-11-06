@@ -6,34 +6,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Paperclip, Send } from 'lucide-react';
 
 export default function ChatroomPage() {
-  const messages = [
-    {
-      id: 1,
-      user: { name: 'Admin', avatar: '/avatars/01.png' },
-      text: 'Welcome to the Seedo chatroom! Feel free to discuss tasks, share tips, or ask questions.',
-      time: '10:00 AM',
-    },
-    {
-      id: 2,
-      user: { name: 'John Doe', avatar: '/avatars/02.png' },
-      text: 'Hello everyone! Just joined. Which task is everyone working on?',
-      time: '10:01 AM',
-      isCurrentUser: false,
-    },
-    {
-      id: 3,
-      user: { name: 'You', avatar: '/avatars/03.png' },
-      text: "Hey John! I'm working on the 'Follow us on Twitter' task. It's pretty quick.",
-      time: '10:02 AM',
-      isCurrentUser: true,
-    },
-    {
-        id: 4,
-        user: { name: 'Jane Smith', avatar: '/avatars/04.png' },
-        text: 'The mega task for creating a review video looks interesting. Has anyone tried it?',
-        time: '10:05 AM',
-        isCurrentUser: false,
-    }
+  const messages: any[] = [
+    // {
+    //   id: 1,
+    //   user: { name: 'Admin', avatar: '/avatars/01.png' },
+    //   text: 'Welcome to the Seedo chatroom! Feel free to discuss tasks, share tips, or ask questions.',
+    //   time: '10:00 AM',
+    // },
   ];
 
   return (
@@ -50,7 +29,7 @@ export default function ChatroomPage() {
 
           <div className="flex-1 flex flex-col border rounded-lg overflow-hidden">
             <div className="flex-1 p-6 space-y-4 overflow-y-auto">
-              {messages.map((msg) => (
+              {messages.length > 0 ? messages.map((msg) => (
                 <div
                   key={msg.id}
                   className={`flex items-start gap-3 ${
@@ -85,7 +64,11 @@ export default function ChatroomPage() {
                     </Avatar>
                   )}
                 </div>
-              ))}
+              )) : (
+                <div className="text-center text-muted-foreground p-8">
+                    <p>No messages yet. Be the first to start a conversation!</p>
+                </div>
+              )}
             </div>
             <div className="p-4 bg-muted/50 border-t">
               <form className="flex items-center gap-2">
