@@ -1,3 +1,4 @@
+
 'use client';
 import Link from 'next/link';
 import {
@@ -9,6 +10,7 @@ import {
   Users,
   Wallet,
   Gamepad2,
+  Copy,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,10 +22,14 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import Header from '@/components/header';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
 export default function DashboardPage() {
+  const { toast } = useToast();
+  const [referralLink, setReferralLink] = useState('');
+
   // Placeholder data
   const loading = false;
   const user = { uid: 'test-user' };
@@ -39,6 +45,12 @@ export default function DashboardPage() {
       },
       referralCode: 'john123',
   };
+  
+  useEffect(() => {
+    if (userData?.referralCode) {
+      setReferralLink(`${window.location.origin}/register?ref=${userData.referralCode}`);
+    }
+  }, [userData?.referralCode]);
 
   if (loading || !user) {
     return (
@@ -47,6 +59,16 @@ export default function DashboardPage() {
       </div>
     );
   }
+  
+  const handleCopyLink = () => {
+    if (referralLink) {
+        navigator.clipboard.writeText(referralLink);
+        toast({
+            title: 'Copied to Clipboard',
+            description: 'Your referral link has been copied.',
+        });
+    }
+  };
 
   const summaryCards = [
     {
@@ -76,7 +98,8 @@ export default function DashboardPage() {
         <div>
           <p className="text-2xl font-bold">{userData?.referrals?.count || 0}</p>
           <p className="text-xs text-muted-foreground">Successful Referrals</p>
-          <Button size="sm" variant="outline" className="mt-2" onClick={() => navigator.clipboard.writeText(`${window.location.origin}/register?ref=${userData?.referralCode}`)}>
+          <Button size="sm" variant="outline" className="mt-2" onClick={handleCopyLink} disabled={!referralLink}>
+            <Copy className="mr-2 h-4 w-4" />
             Copy Link
           </Button>
         </div>
@@ -185,3 +208,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

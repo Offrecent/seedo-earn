@@ -1,31 +1,47 @@
 {
-    "version": 2,
-    "framework": "nextjs",
-    "buildCommand": "next build",
-    "installCommand": "npm install",
-    "outputDirectory": ".next",
-    "env": {
-      "NEXT_PUBLIC_FIREBASE_API_KEY": "AIzaSyDwTs3D-HXBbSliJxbvrUPpyhESA8f6_Vg",
-      "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN": "seedo-earn.firebaseapp.com",
-      "NEXT_PUBLIC_FIREBASE_PROJECT_ID": "seedo-earn",
-      "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET": "seedo-earn.firebasestorage.app",
-      "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "1038825100629",
-      "NEXT_PUBLIC_FIREBASE_APP_ID": "1:1038825100629:web:165e2829768187863b0bdc",
-      "NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID": "G-6MNS6R6HCW"
-    },
-    "rewrites": [
-      { "source": "/api/(.*)", "destination": "/api/$1" }
-    ],
-    "headers": [
-      {
-        "source": "/(.*)",
-        "headers": [
-          { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
-          { "key": "X-Content-Type-Options", "value": "nosniff" },
-          { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-          { "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" }
-        ]
-      }
-    ],
-    "trailingSlash": false
-  }
+  "version": 2,
+  "framework": "nextjs",
+  "buildCommand": "next build",
+  "installCommand": "npm install",
+  "outputDirectory": ".next",
+  "env": {
+    "NEXT_PUBLIC_FIREBASE_API_KEY": "AIzaSyDwTs3D-HXBbSliJxbvrUPpyhESA8f6_Vg",
+    "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN": "seedo-earn.firebaseapp.com",
+    "NEXT_PUBLIC_FIREBASE_PROJECT_ID": "seedo-earn",
+    "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET": "seedo-earn.firebasestorage.app",
+    "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "1038825100629",
+    "NEXT_PUBLIC_FIREBASE_APP_ID": "1:1038825100629:web:165e2829768187863b0bdc",
+    "NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID": "G-6MNS6R6HCW",
+    "NEXT_TELEMETRY_DISABLED": "1"
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, must-revalidate"
+        }
+      ]
+    }
+  ],
+  "trailingSlash": false
+}

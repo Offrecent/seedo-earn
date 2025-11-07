@@ -20,6 +20,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Copy, Loader2, Twitter } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+
 
 export default function ReferralsPage() {
     // Placeholder data
@@ -38,13 +40,24 @@ export default function ReferralsPage() {
       { id: '3', username: 'john123', referrals: { count: 3 } },
   ];
 
+  const { toast } = useToast();
   const [referralLink, setReferralLink] = useState('');
 
   useEffect(() => {
-    if (userData?.referralCode) {
+    if (typeof window !== 'undefined' && userData?.referralCode) {
       setReferralLink(`${window.location.origin}/register?ref=${userData.referralCode}`);
     }
   }, [userData?.referralCode]);
+
+  const handleCopyLink = () => {
+    if (referralLink) {
+        navigator.clipboard.writeText(referralLink);
+        toast({
+            title: 'Copied to Clipboard',
+            description: 'Your referral link has been copied.',
+        });
+    }
+  };
   
   if (loading) {
     return (
@@ -77,7 +90,7 @@ export default function ReferralsPage() {
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row gap-2">
               <Input value={referralLink} readOnly />
-              <Button onClick={() => navigator.clipboard.writeText(referralLink)} disabled={!referralLink}>
+              <Button onClick={handleCopyLink} disabled={!referralLink}>
                 <Copy className="mr-2 h-4 w-4" />
                 Copy Link
               </Button>
@@ -190,3 +203,5 @@ export default function ReferralsPage() {
     </div>
   );
 }
+
+    
