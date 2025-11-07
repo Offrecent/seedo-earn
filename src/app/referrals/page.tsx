@@ -1,4 +1,6 @@
+
 'use client';
+import { useState, useEffect } from 'react';
 import Header from '@/components/header';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,7 +38,13 @@ export default function ReferralsPage() {
       { id: '3', username: 'john123', referrals: { count: 3 } },
   ];
 
-  const referralLink = (typeof window !== 'undefined' && userData?.referralCode) ? `${window.location.origin}/register?ref=${userData.referralCode}` : '';
+  const [referralLink, setReferralLink] = useState('');
+
+  useEffect(() => {
+    if (userData?.referralCode) {
+      setReferralLink(`${window.location.origin}/register?ref=${userData.referralCode}`);
+    }
+  }, [userData?.referralCode]);
   
   if (loading) {
     return (
@@ -69,7 +77,7 @@ export default function ReferralsPage() {
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row gap-2">
               <Input value={referralLink} readOnly />
-              <Button onClick={() => navigator.clipboard.writeText(referralLink)}>
+              <Button onClick={() => navigator.clipboard.writeText(referralLink)} disabled={!referralLink}>
                 <Copy className="mr-2 h-4 w-4" />
                 Copy Link
               </Button>

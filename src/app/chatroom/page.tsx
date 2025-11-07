@@ -3,7 +3,7 @@ import { useState } from 'react';
 import Header from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Loader2, Paperclip, Send } from 'lucide-react';
 
 export default function ChatroomPage() {
@@ -70,7 +70,6 @@ export default function ChatroomPage() {
                 >
                   {msg.userId !== user?.uid && (
                      <Avatar>
-                        <AvatarImage src={msg.user?.avatar} alt={msg.username} />
                         <AvatarFallback>{msg.username?.charAt(0).toUpperCase()}</AvatarFallback>
                     </Avatar>
                   )}
@@ -91,7 +90,6 @@ export default function ChatroomPage() {
                   </div>
                    {msg.userId === user?.uid && (
                      <Avatar>
-                        <AvatarImage src={userData?.avatar} alt={userData?.username} />
                         <AvatarFallback>{userData?.username?.charAt(0).toUpperCase()}</AvatarFallback>
                     </Avatar>
                   )}
