@@ -43,5 +43,6 @@
       ]
     }
   ],
-  "trailingSlash": false
+  "trailingSlash": false,
+  "ignoreCommand": "echo 'Ignore Firebase backend during Next.js build'"
 }
