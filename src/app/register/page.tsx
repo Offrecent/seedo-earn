@@ -16,7 +16,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogClose,
   DialogDescription,
   DialogFooter
@@ -35,6 +34,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useFlutterwave, closePaymentModal } from 'flutterwave-react-v3';
 
 const StepIndicator = ({ currentStep }: { currentStep: number }) => {
   const steps = ['Fill Details', 'Pay', 'Verify'];
@@ -130,14 +130,45 @@ export default function RegisterPage() {
     });
   };
   
+    const flutterwaveConfig = {
+      public_key: 'FLWPUBK-1fb69b0ab36fbfbb5de021819aa12b9c-X',
+      tx_ref: Date.now().toString(),
+      amount: 3000,
+      currency: 'NGN',
+      payment_options: 'card,mobilemoney,ussd',
+      customer: {
+        email: formData.email,
+        phone_number: formData.phone,
+        name: formData.fullName,
+      },
+      customizations: {
+        title: 'Seedo Subscription',
+        description: 'Monthly subscription for Seedo',
+        logo: 'https://www.seedo.com/logo.png', // Replace with your logo
+      },
+    };
+
+    const handleFlutterwavePayment = useFlutterwave(flutterwaveConfig);
+
     const handlePayment = () => {
         startTransition(() => {
-            console.log("Initiating payment simulation...");
-            // Simulate payment verification
-            setTimeout(() => {
-                console.log("Simulating user creation...");
-                setStep(3); // Move to verification/success step
-            }, 2000);
+            handleFlutterwavePayment({
+                callback: (response) => {
+                    console.log(response);
+                    // IMPORTANT: Here you would call your backend to verify the transaction
+                    // For now, we will assume success and proceed
+                    if (response.status === 'successful') {
+                        setStep(3); // Move to success step
+                    } else {
+                        setError('Payment was not successful. Please try again.');
+                    }
+                    closePaymentModal();
+                },
+                onClose: () => {
+                    // This is called when the user closes the payment modal
+                    console.log('Payment modal closed');
+                },
+            });
         });
     }
 
@@ -309,7 +340,7 @@ export default function RegisterPage() {
                     </Alert>
                     <Button onClick={handlePayment} className="w-full" size="lg" disabled={isPending}>
                          {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Pay Now (Simulation)
+                        Pay with Flutterwave
                     </Button>
                      <Button variant="outline" className="w-full" onClick={() => setStep(1)} disabled={isPending}>
                         Back to Form
