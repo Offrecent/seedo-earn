@@ -141,7 +141,8 @@ export default function RegisterPage() {
         setStep(2); // Move to payment step
     });
   };
-  
+
+  const handlePayment = () => {
     const flutterwaveConfig = {
       public_key: 'FLWPUBK-1fb69b0ab36fbfbb5de021819aa12b9c-X',
       tx_ref: Date.now().toString(),
@@ -162,54 +163,53 @@ export default function RegisterPage() {
 
     const handleFlutterwavePayment = useFlutterwave(flutterwaveConfig);
 
-    const handlePayment = () => {
-        handleFlutterwavePayment({
-            callback: (response) => {
-                console.log(response);
-                if (response.status === 'successful' && response.transaction_id) {
-                    setStep(3); // Move to verification step
-                    startTransition(async () => {
-                        try {
-                             const result = await verifyPaymentAndCreateUser({
-                                transactionId: String(response.transaction_id),
-                                userData: {
-                                    fullName: formData.fullName,
-                                    username: formData.username,
-                                    gender: formData.gender,
-                                    email: formData.email,
-                                    phone: formData.phone,
-                                    whatsapp: formData.whatsapp,
-                                    referralCode: formData.referralCode,
-                                    password: formData.password,
-                                }
-                            });
-
-                            if (result.success) {
-                               // The UI already shows success, maybe just a toast
-                               toast({
-                                   title: "Verification Complete",
-                                   description: "Your account has been created.",
-                               });
-                            } else {
-                                setError(result.message || "An unknown error occurred during verification.");
-                                setStep(2); // Go back to payment step on error
+    handleFlutterwavePayment({
+        callback: (response) => {
+            console.log(response);
+            if (response.status === 'successful' && response.transaction_id) {
+                setStep(3); // Move to verification step
+                startTransition(async () => {
+                    try {
+                         const result = await verifyPaymentAndCreateUser({
+                            transactionId: String(response.transaction_id),
+                            userData: {
+                                fullName: formData.fullName,
+                                username: formData.username,
+                                gender: formData.gender,
+                                email: formData.email,
+                                phone: formData.phone,
+                                whatsapp: formData.whatsapp,
+                                referralCode: formData.referralCode,
+                                password: formData.password,
                             }
-                        } catch (e: any) {
-                             setError(e.message || "An unexpected error occurred.");
-                             setStep(2);
+                        });
+
+                        if (result.success) {
+                           // The UI already shows success, maybe just a toast
+                           toast({
+                               title: "Verification Complete",
+                               description: "Your account has been created.",
+                           });
+                        } else {
+                            setError(result.message || "An unknown error occurred during verification.");
+                            setStep(2); // Go back to payment step on error
                         }
-                    });
-                } else {
-                    setError('Payment was not successful. Please try again.');
-                }
-                closePaymentModal();
-            },
-            onClose: () => {
-                // This is called when the user closes the payment modal
-                console.log('Payment modal closed');
-            },
-        });
-    }
+                    } catch (e: any) {
+                         setError(e.message || "An unexpected error occurred.");
+                         setStep(2);
+                    }
+                });
+            } else {
+                setError('Payment was not successful. Please try again.');
+            }
+            closePaymentModal();
+        },
+        onClose: () => {
+            // This is called when the user closes the payment modal
+            console.log('Payment modal closed');
+        },
+    });
+}
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -481,3 +481,5 @@ function TermsContent() {
         </>
     );
 }
+
+    
