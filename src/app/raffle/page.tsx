@@ -1,3 +1,4 @@
+
 'use client';
 import { useEffect, useState } from 'react';
 import Header from '@/components/header';
@@ -7,6 +8,12 @@ import { Ticket, Loader2 } from 'lucide-react';
 
 export default function RafflePage() {
   const [timeLeft, setTimeLeft] = useState<{ hours: number; minutes: number; seconds: number } | null>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
 
   // Placeholder data
   const loading = false;
@@ -23,7 +30,7 @@ export default function RafflePage() {
   ];
 
   useEffect(() => {
-    if (!currentRaffle) return;
+    if (!currentRaffle || !isClient) return;
 
     const interval = setInterval(() => {
       const now = new Date();
@@ -42,7 +49,7 @@ export default function RafflePage() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [currentRaffle]);
+  }, [currentRaffle, isClient]);
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -61,7 +68,7 @@ export default function RafflePage() {
                 <CardTitle>Next Draw In</CardTitle>
             </CardHeader>
             <CardContent>
-                {loading ? <Loader2 className="w-12 h-12 animate-spin mx-auto"/> : currentRaffle && timeLeft ? (
+                {loading ? <Loader2 className="w-12 h-12 animate-spin mx-auto"/> : currentRaffle && timeLeft && isClient ? (
                     <>
                         <p className="text-5xl font-bold tracking-tighter">
                             {String(timeLeft.hours).padStart(2, '0')}:
@@ -71,6 +78,7 @@ export default function RafflePage() {
                         <p className="text-accent font-bold text-lg mt-2">Prize: ₦{currentRaffle.prizeAmount.toLocaleString()}</p>
                     </>
                 ) : <p>No active raffle right now.</p>}
+                 {!isClient && <Loader2 className="w-12 h-12 animate-spin mx-auto"/>}
             </CardContent>
           </Card>
 

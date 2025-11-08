@@ -47,7 +47,7 @@ export default function DashboardPage() {
   };
   
   useEffect(() => {
-    if (userData?.referralCode) {
+    if (typeof window !== 'undefined' && userData?.referralCode) {
       setReferralLink(`${window.location.origin}/register?ref=${userData.referralCode}`);
     }
   }, [userData?.referralCode]);

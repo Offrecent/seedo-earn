@@ -1,6 +1,6 @@
 
 'use client';
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
@@ -35,6 +35,9 @@ import { Loader2, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useFlutterwave, closePaymentModal } from 'flutterwave-react-v3';
+import { verifyPaymentAndCreateUser } from '@/ai/flows/payment-flow';
+import { useToast } from '@/components/ui/use-toast';
+
 
 const StepIndicator = ({ currentStep }: { currentStep: number }) => {
   const steps = ['Fill Details', 'Pay', 'Verify'];
@@ -69,6 +72,7 @@ const StepIndicator = ({ currentStep }: { currentStep: number }) => {
 export default function RegisterPage() {
   const [step, setStep] = useState(1);
   const searchParams = useSearchParams();
+  const { toast } = useToast();
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -77,10 +81,18 @@ export default function RegisterPage() {
     email: '',
     phone: '',
     whatsapp: '',
-    referralCode: searchParams.get('ref') || '',
+    referralCode: '',
     password: '',
     confirmPassword: '',
   });
+
+  useEffect(() => {
+    const ref = searchParams.get('ref');
+    if (ref) {
+      setFormData((prev) => ({ ...prev, referralCode: ref }));
+    }
+  }, [searchParams]);
+
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -151,24 +163,51 @@ export default function RegisterPage() {
     const handleFlutterwavePayment = useFlutterwave(flutterwaveConfig);
 
     const handlePayment = () => {
-        startTransition(() => {
-            handleFlutterwavePayment({
-                callback: (response) => {
-                    console.log(response);
-                    // IMPORTANT: Here you would call your backend to verify the transaction
-                    // For now, we will assume success and proceed
-                    if (response.status === 'successful') {
-                        setStep(3); // Move to success step
-                    } else {
-                        setError('Payment was not successful. Please try again.');
-                    }
-                    closePaymentModal();
-                },
-                onClose: () => {
-                    // This is called when the user closes the payment modal
-                    console.log('Payment modal closed');
-                },
-            });
+        handleFlutterwavePayment({
+            callback: (response) => {
+                console.log(response);
+                if (response.status === 'successful' && response.transaction_id) {
+                    setStep(3); // Move to verification step
+                    startTransition(async () => {
+                        try {
+                             const result = await verifyPaymentAndCreateUser({
+                                transactionId: String(response.transaction_id),
+                                userData: {
+                                    fullName: formData.fullName,
+                                    username: formData.username,
+                                    gender: formData.gender,
+                                    email: formData.email,
+                                    phone: formData.phone,
+                                    whatsapp: formData.whatsapp,
+                                    referralCode: formData.referralCode,
+                                    password: formData.password,
+                                }
+                            });
+
+                            if (result.success) {
+                               // The UI already shows success, maybe just a toast
+                               toast({
+                                   title: "Verification Complete",
+                                   description: "Your account has been created.",
+                               });
+                            } else {
+                                setError(result.message || "An unknown error occurred during verification.");
+                                setStep(2); // Go back to payment step on error
+                            }
+                        } catch (e: any) {
+                             setError(e.message || "An unexpected error occurred.");
+                             setStep(2);
+                        }
+                    });
+                } else {
+                    setError('Payment was not successful. Please try again.');
+                }
+                closePaymentModal();
+            },
+            onClose: () => {
+                // This is called when the user closes the payment modal
+                console.log('Payment modal closed');
+            },
         });
     }
 
@@ -338,8 +377,7 @@ export default function RegisterPage() {
                             You will be redirected to our secure payment partner, Flutterwave, to complete the transaction.
                         </AlertDescription>
                     </Alert>
-                    <Button onClick={handlePayment} className="w-full" size="lg" disabled={isPending}>
-                         {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    <Button onClick={handlePayment} className="w-full" size="lg">
                         Pay with Flutterwave
                     </Button>
                      <Button variant="outline" className="w-full" onClick={() => setStep(1)} disabled={isPending}>
@@ -352,23 +390,32 @@ export default function RegisterPage() {
                     <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 260, damping: 20 }}>
                         <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
                     </motion.div>
-                    <h3 className="text-2xl font-bold">Registration Successful!</h3>
-                     <p className="text-muted-foreground">Welcome to the Seedo community. Your account is now active.</p>
-                     <Alert className="text-left bg-green-500/10 border-green-500/50">
-                        <CheckCircle className="h-4 w-4" />
-                        <AlertTitle>Welcome Bonus Added!</AlertTitle>
-                        <AlertDescription>
-                           A welcome bonus of <strong>₦4,500</strong> has been credited to your account. This bonus is locked until you successfully refer 3 valid users.
-                        </AlertDescription>
-                    </Alert>
-                    <div className="space-y-2">
-                        <Button className="w-full" size="lg" onClick={() => router.push('/dashboard')}>
-                            Go to Dashboard
-                        </Button>
-                         <Button variant="secondary" className="w-full">
-                            <a href="#" target="_blank" rel="noopener noreferrer">Join WhatsApp Group</a>
-                        </Button>
-                    </div>
+                    <h3 className="text-2xl font-bold">Registration Almost Complete!</h3>
+                    { isPending ? (
+                        <>
+                         <p className="text-muted-foreground">Verifying your payment... please wait.</p>
+                         <Loader2 className="mr-2 h-8 w-8 animate-spin mx-auto" />
+                        </>
+                    ) : (
+                        <>
+                             <p className="text-muted-foreground">Welcome to the Seedo community. Your account is now active.</p>
+                             <Alert className="text-left bg-green-500/10 border-green-500/50">
+                                <CheckCircle className="h-4 w-4" />
+                                <AlertTitle>Welcome Bonus Added!</AlertTitle>
+                                <AlertDescription>
+                                   A welcome bonus of <strong>₦4,500</strong> has been credited to your account. This bonus is locked until you successfully refer 3 valid users.
+                                </AlertDescription>
+                            </Alert>
+                            <div className="space-y-2">
+                                <Button className="w-full" size="lg" onClick={() => router.push('/dashboard')}>
+                                    Go to Dashboard
+                                </Button>
+                                 <Button variant="secondary" className="w-full">
+                                    <a href="#" target="_blank" rel="noopener noreferrer">Join WhatsApp Group</a>
+                                </Button>
+                            </div>
+                        </>
+                    )}
                  </div>
             )}
           </CardContent>
@@ -407,7 +454,7 @@ function TermsContent() {
         </section>
         <section>
             <h2 className="text-lg font-semibold mt-4">5. Withdrawal Policy</h2>
-             <ul className="list-disc pl-6 space-y-2">
+             <ul className="list-disc pl.6 space-y-2">
               <li>A minimum withdrawal amount of <strong>₦5,000</strong> is required.</li>
               <li>A non-refundable processing fee of <strong>₦200</strong> will be deducted.</li>
               <li>Withdrawals may take up to 48 hours to be processed.</li>

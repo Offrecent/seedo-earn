@@ -44,7 +44,7 @@ export default function ReferralsPage() {
   const [referralLink, setReferralLink] = useState('');
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && userData?.referralCode) {
+    if (userData?.referralCode) {
       setReferralLink(`${window.location.origin}/register?ref=${userData.referralCode}`);
     }
   }, [userData?.referralCode]);
@@ -60,7 +60,7 @@ export default function ReferralsPage() {
   };
 
   const handleShare = (platform: 'whatsapp' | 'twitter') => {
-    if (!referralLink) return;
+    if (!referralLink || typeof window === 'undefined') return;
 
     let url = '';
     const text = encodeURIComponent('Join Seedo and start earning! Use my link: ');
