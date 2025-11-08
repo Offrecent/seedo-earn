@@ -1,3 +1,4 @@
+# Ignore Firebase backend files during Next.js build
 functions/
 firebase.json
 firestore.rules
