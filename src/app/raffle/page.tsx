@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Ticket, Loader2 } from 'lucide-react';
 
 export default function RafflePage() {
-  const [timeLeft, setTimeLeft] = useState({ hours: 12, minutes: 45, seconds: 30 });
+  const [timeLeft, setTimeLeft] = useState<{ hours: number; minutes: number; seconds: number } | null>(null);
 
   // Placeholder data
   const loading = false;
@@ -61,7 +61,7 @@ export default function RafflePage() {
                 <CardTitle>Next Draw In</CardTitle>
             </CardHeader>
             <CardContent>
-                {loading ? <Loader2 className="w-12 h-12 animate-spin mx-auto"/> : currentRaffle ? (
+                {loading ? <Loader2 className="w-12 h-12 animate-spin mx-auto"/> : currentRaffle && timeLeft ? (
                     <>
                         <p className="text-5xl font-bold tracking-tighter">
                             {String(timeLeft.hours).padStart(2, '0')}:
