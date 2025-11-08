@@ -1,11 +1,19 @@
+
 'use client';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, Gift, Users, Zap, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 
 export default function Home() {
+  const [year, setYear] = useState(new Date().getFullYear());
+
+  useEffect(() => {
+    setYear(new Date().getFullYear());
+  }, []);
+
   const scrollToFeatures = () => {
     const featuresSection = document.getElementById('features');
     if (featuresSection) {
@@ -154,7 +162,7 @@ export default function Home() {
 
       <footer className="border-t">
         <div className="container py-8 flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} Seedo. All rights reserved.</p>
+          <p>&copy; {year} Seedo. All rights reserved.</p>
           <div className="flex flex-wrap justify-center gap-4 mt-4 md:mt-0">
             <a href="#" className="hover:text-primary">WhatsApp Support</a>
             <a href="mailto:seedo.earn@gmail.com" className="hover:text-primary">seedo.earn@gmail.com</a>
